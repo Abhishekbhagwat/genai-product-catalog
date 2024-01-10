@@ -1,0 +1,9 @@
+
+
+filegroup(
+    name = "loader_config",
+    srcs = [
+        "loader.ini",
+    ],
+    visibility = ["//:__subpackages__"],
+)

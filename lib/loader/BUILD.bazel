@@ -1,0 +1,45 @@
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+load("@python_deps//:requirements.bzl", "requirement")
+
+PY_DEPS = [
+    requirement("requests"),
+    requirement("en_core_web_sm"),
+    requirement("pandas"),
+    requirement("jsonpickle"),
+    requirement("numpy"),
+    requirement("scipy"),
+    requirement("spacy"),
+    requirement("spacy-cleaner"),
+    requirement("jinja2"),
+]
+
+py_library(
+    name = "loader-lib",
+    srcs = [
+        "cmd_fetch.py",
+        "model.py",
+    ],
+    data = [
+        "//conf:loader_config",
+        "//third-party/flipkart",
+    ],
+    imports = ["."],
+    srcs_version = "PY3",
+    visibility = ["//visibility:public"],
+    deps = PY_DEPS,
+)
+
+py_binary(
+    name = "loader",
+    srcs = [
+        "loader.py",
+    ],
+    data = [
+        "model.py",
+        "//third_party/data:flipkart_data",
+    ],
+    imports = ["."],
+    deps = [
+        ":loader-lib",
+    ] + PY_DEPS,
+)

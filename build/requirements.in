@@ -1,0 +1,24 @@
+# Scipy and Numpy for examples
+requests
+scipy
+numpy
+mediapipe
+pandas
+en_core_web_sm@https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.4.0/en_core_web_sm-3.4.0-py3-none-any.whl
+spacy
+spacy-cleaner
+jsonpickle
+
+# Required Google and Protobuf APIs
+google-api-python-client
+google-cloud-aiplatform==1.39.0
+google-cloud-storage
+gcloud
+
+grpclib
+grpcio
+grpcio-tools
+
+
+fastapi
+uvicorn

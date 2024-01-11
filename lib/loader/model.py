@@ -96,6 +96,7 @@ class Currency:
 
 class Image:
     """ The simplest object structure for an image """
+
     def __init__(self, url):
         url = url.strip()
         self.origin_url = url

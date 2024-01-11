@@ -1,6 +1,5 @@
-
-import requests
 import configparser
+
 from model import Image
 
 
@@ -19,4 +18,3 @@ class FetchImageCommand:
         print(image.url)
 
         return True
-

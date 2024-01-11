@@ -12,10 +12,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import concurrent.futures
+
 import pandas as pd
+
 import model
 from cmd_fetch import FetchImageCommand
-import concurrent.futures
 
 
 def read_file():
@@ -47,7 +49,7 @@ def read_file():
         for i, row in data.iterrows():
             if j > 10:
                 break
-            j = j+1
+            j = j + 1
             p = model.parse_row(row, True)
             if p is not None:
                 for h in p.headers:
@@ -64,6 +66,7 @@ def read_file():
             print(e)
 
     print("Total Images: %d" % totalImages)
+
 
 if __name__ == '__main__':
     read_file()

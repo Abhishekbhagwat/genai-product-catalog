@@ -19,7 +19,7 @@ These tests assume:
 -The appropriate variables have been set in config.py
 -The test is run from an environment that has permission to call cloud APIs
 """
-import logging;
+import logging
 
 logging.basicConfig(level=logging.INFO)
 import unittest

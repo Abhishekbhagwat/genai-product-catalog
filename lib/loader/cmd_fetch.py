@@ -1,9 +1,7 @@
 
 import requests
 import configparser
-from google.cloud import storage
 from model import Image
-storage_client = storage.Client()
 
 
 class FetchImageCommand:
@@ -15,6 +13,10 @@ class FetchImageCommand:
         FetchImageCommand.bucket_name = config['DEFAULT']['bucket_name']
 
     @staticmethod
-    def fetch_image(image: Image) -> None:
+    def fetch_image(image: Image) -> bool:
         print(FetchImageCommand.bucket_name)
+        print(image.origin_url)
         print(image.url)
+
+        return True
+

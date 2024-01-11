@@ -13,12 +13,11 @@ jsonpickle
 google-api-python-client
 google-cloud-aiplatform==1.39.0
 google-cloud-storage
+google-cloud-bigquery
 gcloud
 
 grpclib
 grpcio
-grpcio-tools
-
 
 fastapi
 uvicorn

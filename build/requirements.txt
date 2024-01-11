@@ -72,7 +72,9 @@ google-auth-httplib2==0.2.0
 google-cloud-aiplatform==1.39.0
     # via -r requirements.in
 google-cloud-bigquery==3.15.0
-    # via google-cloud-aiplatform
+    # via
+    #   -r requirements.in
+    #   google-cloud-aiplatform
 google-cloud-core==2.4.1
     # via
     #   google-cloud-bigquery
@@ -101,20 +103,29 @@ grpc-google-iam-v1==0.13.0
     # via google-cloud-resource-manager
 grpcio==1.60.0
     # via
+    #   -r requirements.in
     #   google-api-core
     #   googleapis-common-protos
     #   grpc-google-iam-v1
     #   grpcio-status
 grpcio-status==1.48.2
     # via google-api-core
+grpclib==0.4.7
+    # via -r requirements.in
 h11==0.14.0
     # via uvicorn
+h2==4.1.0
+    # via grpclib
+hpack==4.0.0
+    # via h2
 httplib2==0.22.0
     # via
     #   gcloud
     #   google-api-python-client
     #   google-auth-httplib2
     #   oauth2client
+hyperframe==6.0.1
+    # via h2
 idna==3.6
     # via
     #   anyio
@@ -133,6 +144,8 @@ matplotlib==3.8.2
     # via mediapipe
 mediapipe==0.10.9
     # via -r requirements.in
+multidict==6.0.4
+    # via grpclib
 murmurhash==1.0.10
     # via
     #   preshed
@@ -291,4 +304,4 @@ wasabi==0.10.1
     #   thinc
 
 # The following packages are considered to be unsafe in a requirements file:
-# setuptools
+setuptools==69.0.3

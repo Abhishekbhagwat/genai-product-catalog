@@ -83,18 +83,24 @@ class Currency:
         d_and_c = numeric / 100
         dec, whole = math.modf(d_and_c)
         self.code = "USD"
+
+        if pd.isna(whole):
+            whole = 0
+
+        if pd.isna(dec):
+            dec = 0
+
         self.value = Numeric(int(whole), int(dec))
         self.rounding_rule = RoundingRule()
 
 
 class Image:
     """ The simplest object structure for an image """
-
     def __init__(self, url):
+        url = url.strip()
         self.origin_url = url
         if url.startswith('http'):
-            url = url[url.index('/image'):]
-        self.url = url
+            self.url = url[url.index('/image'):]
 
 
 class BusinessKey:
@@ -255,10 +261,8 @@ def parse_row(r: pd.DataFrame, pre_process: bool = False) -> Product:
     base_url = r['product_url']
 
     if isinstance(images_raw, str):
-        images_raw = images_raw.replace("[", "").replace("]", "").replace("\"", "")
-        filtered = filter(file_exists, [get_image_uri(x.strip()) for x in images_raw.split(",")])
-        if filtered is not None:
-            images: List[Image] = [Image(x) for x in filtered]
+        images_raw = images_raw.replace("[", "").replace("]", "").replace("\"", '')
+        images: List[Image] = [Image(x) for x in images_raw.split(",")]
 
     # No images, ignore product
     if len(images) == 0:

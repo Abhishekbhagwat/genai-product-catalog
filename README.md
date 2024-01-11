@@ -39,6 +39,8 @@ This example uses `pip` as it's installed with Python3
 python3 -m venv venv
 # Activate the virtual environment
 source ./venv/bin/activate
+# Update PIP
+pip install --upgrade pip
 # Install dependencies
 pip install -r build/requirements.txt
 ```

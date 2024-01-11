@@ -157,7 +157,7 @@ load("@rules_python//python:pip.bzl", "pip_parse")
 pip_parse(
     name = "python_deps",
     python_interpreter_target = interpreter,
-    requirements_lock = "//:build/requirements.txt",
+    requirements_lock = "//:conf/requirements.txt",
 )
 
 load("@python_deps//:requirements.bzl", local_deps = "install_deps")

@@ -32,7 +32,7 @@ def read_file():
     imageFetcher = FetchImageCommand()
 
     data = pd.read_csv(
-        'third-party/flipkart/ecommerce-sample.csv',
+        'third_party/flipkart/ecommerce-sample.csv',
         dtype=model.FILE_COLUMNS)
 
     data = data.drop_duplicates(subset=['product_name'])

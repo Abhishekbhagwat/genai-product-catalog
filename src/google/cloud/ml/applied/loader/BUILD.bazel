@@ -21,7 +21,7 @@ py_library(
     ],
     data = [
         "//conf:loader_config",
-        "//third-party/flipkart:flipkart_data",
+        "//third_party/flipkart:flipkart_data",
     ],
     imports = ["."],
     srcs_version = "PY3",
@@ -36,7 +36,7 @@ py_binary(
     ],
     data = [
         "model.py",
-        "//third-party/flipkart:flipkart_data",
+        "//third_party/flipkart:flipkart_data",
     ],
     imports = ["."],
     deps = [

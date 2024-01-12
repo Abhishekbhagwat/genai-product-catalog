@@ -17,10 +17,10 @@
 
 import logging
 import time
+
 from functools import cache
 from typing import NamedTuple, Optional, Sequence
 
-import config
 from google.cloud import aiplatform
 from google.protobuf import struct_pb2
 
@@ -29,18 +29,18 @@ class EmbeddingResponse(NamedTuple):
     text_embedding: Sequence[float]
     image_embedding: Sequence[float]
 
-
 class EmbeddingPredictionClient:
     """Wrapper around Prediction Service Client."""
 
-    def __init__(self, project: str,
-                 location: str = "us-central1",
-                 api_regional_endpoint: str = "us-central1-aiplatform.googleapis.com"):
+    def __init__(self):
+        project = config_value(SECTION_PROJECT, 'id')
+        location = config_value(SECTION_PROJECT, 'location')
+        api_regional_endpoint = config_value(SECTION_PROJECT, 'endpoint')
+
         client_options = {"api_endpoint": api_regional_endpoint}
         # Initialize client that will be used to create and send requests.
         # This client only needs to be created once, and can be reused for multiple requests.
-        self.client = aiplatform.gapic.PredictionServiceClient(
-            client_options=client_options)
+        self.client = aiplatform.gapic.PredictionServiceClient(client_options=client_options)
         self.location = location
         self.project = project
 

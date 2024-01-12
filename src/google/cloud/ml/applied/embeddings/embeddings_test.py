@@ -22,11 +22,10 @@ the expected format. This integration test assumes:
 
 https://cloud.google.com/vertex-ai/docs/generative-ai/embeddings/get-multimodal-embeddings
 """
+
 import unittest
-
-import config
-
 import embeddings
+from ..utils import utils
 
 
 class EmbeddingsTest(unittest.TestCase):
@@ -40,7 +39,20 @@ class EmbeddingsTest(unittest.TestCase):
 
     def test_embeddings_api_long_text(self):
         res = embeddings.embed(
-            'This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters. This is a description longer than 1024 characters.',
+            """This is a description longer than 1024 characters. 
+            This is a description longer than 1024 characters. This is a description 
+            longer than 1024 characters. This is a description longer than 1024 characters. 
+            This is a description longer than 1024 characters. This is a description longer 
+            than 1024 characters. This is a description longer than 1024 characters. This 
+            is a description longer than 1024 characters. This is a description longer than 
+            1024 characters. This is a description longer than 1024 characters. This is a 
+            description longer than 1024 characters. This is a description longer than 1024 
+            characters. This is a description longer than 1024 characters. This is a description 
+            longer than 1024 characters. This is a description longer than 1024 characters. 
+            This is a description longer than 1024 characters. This is a description longer 
+            than 1024 characters. This is a description longer than 1024 characters. 
+            This is a description longer than 1024 characters. This is a description 
+            longer than 1024 characters. This is a description longer than 1024 characters.""",
         )
         self.assertEqual(len(res.text_embedding), 1408)
         self.assertIsNone(res.image_embedding)
@@ -48,7 +60,7 @@ class EmbeddingsTest(unittest.TestCase):
     def test_embeddings_api_with_image(self):
         res = embeddings.embed(
             'This is a test description',
-            config.TEST_GCS_IMAGE,
+            utils.config_value(utils.SECTION_TEST, 'gcs_image'),
         )
         self.assertEqual(len(res.text_embedding), 1408)
         self.assertEqual(len(res.image_embedding), 1408)

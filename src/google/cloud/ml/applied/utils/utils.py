@@ -31,6 +31,7 @@ SECTION_MODELS = 'models'
 SECTION_VECTORS = 'vectors'
 SECTION_BIG_QUERY = 'big_query'
 SECTION_CATEGORY = 'category'
+SECTION_TEST = 'test'
 
 config = configparser.ConfigParser()
 config.read(DEFAULT_CONFIG)

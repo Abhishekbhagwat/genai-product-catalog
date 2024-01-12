@@ -24,18 +24,21 @@ from typing import NamedTuple, Optional, Sequence
 from google.cloud import aiplatform
 from google.protobuf import struct_pb2
 
+from ..utils import utils
+
 
 class EmbeddingResponse(NamedTuple):
     text_embedding: Sequence[float]
     image_embedding: Sequence[float]
 
+
 class EmbeddingPredictionClient:
     """Wrapper around Prediction Service Client."""
 
     def __init__(self):
-        project = config_value(SECTION_PROJECT, 'id')
-        location = config_value(SECTION_PROJECT, 'location')
-        api_regional_endpoint = config_value(SECTION_PROJECT, 'endpoint')
+        project = utils.config_value(utils.SECTION_PROJECT, 'id')
+        location = utils.config_value(utils.SECTION_PROJECT, 'location')
+        api_regional_endpoint = utils.config_value(utils.SECTION_PROJECT, 'endpoint')
 
         client_options = {"api_endpoint": api_regional_endpoint}
         # Initialize client that will be used to create and send requests.
@@ -44,8 +47,10 @@ class EmbeddingPredictionClient:
         self.location = location
         self.project = project
 
-    def get_embedding(self, text: Optional[str] = None,
-                      image: Optional[str] = None, base64: bool = False):
+    def get_embedding(self,
+                      text: Optional[str] = None,
+                      image: Optional[str] = None,
+                      base64: bool = False):
         """Invoke Vertex multimodal embedding API.
 
         You can pass text and/or image. If neither is passed will raise exception
@@ -85,6 +90,9 @@ class EmbeddingPredictionClient:
                 image_struct.fields['bytesBase64Encoded'].string_value = encoded_content
 
         instances = [instance]
+
+        # TODO - THIS SHOULD NOT BE HARD CODED
+
         endpoint = (f"projects/{self.project}/locations/{self.location}"
                     "/publishers/google/models/multimodalembedding@001")
         response = self.client.predict(endpoint=endpoint, instances=instances)
@@ -113,7 +121,7 @@ def embed(
         text: str,
         image: Optional[str] = None,
         base64: bool = False,
-        project: str = config.PROJECT) -> EmbeddingResponse:
+        project: str = utils.config_value(utils.SECTION_PROJECT, 'id')) -> EmbeddingResponse:
     """Invoke vertex multimodal embedding API.
 
     Args:
@@ -130,7 +138,5 @@ def embed(
           no image provide
     """
     client = get_client(project)
-    start = time.time()
     response = client.get_embedding(text=text, image=image, base64=base64)
-    end = time.time()
     return response

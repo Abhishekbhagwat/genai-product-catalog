@@ -20,14 +20,11 @@ These tests assume:
 -The test is run from an environment that has permission to call cloud APIs
 """
 import logging
-
-logging.basicConfig(level=logging.INFO)
 import unittest
-
 import attributes
-
 from ..utils import utils
 
+logging.basicConfig(level=logging.INFO)
 
 class AttributesTest(unittest.TestCase):
 

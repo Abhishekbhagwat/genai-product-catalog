@@ -25,21 +25,31 @@ logging.basicConfig(level=logging.INFO)
 import unittest
 
 import attributes
-import config
+
+from ..utils import utils
 
 
 class AttributesTest(unittest.TestCase):
 
+    def setUp(self):
+        bq = utils.SECTION_BIG_QUERY
+        test = utils.SECTION_TEST
+        vectors = utils.SECTION_VECTORS
+        self.testProductId = utils.config_value(test, 'product_id')
+        self.numberOfNeighbors = int(utils.config_value(vectors, 'number_of_neighbors'))
+        self.testImage = utils.config_value(test, 'gcs_image')
+        self.testCategory = utils.config_value(test, 'category_l0')
+
     def test_join_attributes_desc(self):
-        res = attributes.join_attributes_desc([config.TEST_PRODUCT_ID])
+        res = attributes.join_attributes_desc([self.testProductId])
         self.assertIsNotNone(res)
         self.assertIsInstance(res, dict)
         for k, v in res.items():
             self.assertIsInstance(k, str)
             self.assertIsInstance(v, dict)
             self.assertEqual(set(v.keys()), {'attributes', 'description'})
-        logging.info(res[config.TEST_PRODUCT_ID]['attributes'])
-        logging.info(res[config.TEST_PRODUCT_ID]['description'])
+        logging.info(res[self.testProductId]['attributes'])
+        logging.info(res[self.testProductId]['description'])
 
     def test_generate_prompt(self):
         desc = 'This is an orange'
@@ -56,11 +66,11 @@ class AttributesTest(unittest.TestCase):
         res = attributes.retrieve(
             'This is a test description',
             None,
-            config.TEST_GCS_IMAGE
+            self.testImage
         )
         logging.info(res)
         self.assertIsInstance(res, list)
-        self.assertEqual(len(res), config.NUM_NEIGHBORS * 2)
+        self.assertEqual(len(res), self.numberOfNeighbors * 2)
         self.assertEqual(set(res[0].keys()),
                          {'id', 'attributes', 'description', 'distance'})
 
@@ -86,7 +96,7 @@ class AttributesTest(unittest.TestCase):
         res = attributes.retrieve_and_generate_attributes(
             'Fleece Jacket',
             None,
-            config.TEST_GCS_IMAGE
+            self.testImage
         )
         logging.info(res)
         self.assertIsInstance(res, dict)
@@ -96,8 +106,8 @@ class AttributesTest(unittest.TestCase):
         res = attributes.retrieve_and_generate_attributes(
             'Fleece Jacket',
             None,
-            config.TEST_GCS_IMAGE,
-            filters=[config.TEST_CATEGORY_L0],
+            self.testImage,
+            filters=[self.testCategory],
         )
         logging.info(res)
         self.assertIsInstance(res, dict)
@@ -107,7 +117,7 @@ class AttributesTest(unittest.TestCase):
         res = attributes.retrieve_and_generate_attributes(
             'Fleece Jacket',
             None,
-            config.TEST_GCS_IMAGE,
+            self.testImage,
             filters=['XYZunknowncategory'],
         )
         logging.info(res)

@@ -18,15 +18,13 @@ import json
 import logging
 from typing import Optional
 
-import config
-import domain_model as m
-import embeddings
-import nearest_neighbors
-import utils
+from ..model import domain_model as m
+from ..embeddings import embeddings
+from ..utils import utils
+from ..knn import nearest_neighbors
 
 bq_client = utils.get_bq_client()
 llm = utils.get_llm()
-
 
 def join_attributes_desc(ids: list[str]) -> dict[str:dict]:
     """
@@ -41,25 +39,31 @@ def join_attributes_desc(ids: list[str]) -> dict[str:dict]:
             attributes: e.g. {'color':'green', 'pattern': striped}
             description: e.g. 'This is a description'
     """
+    bq = utils.SECTION_BIG_QUERY
+    table_name = utils.config_value(bq, 'product_table')
+    column_id = utils.config_value(bq, 'product_id_column')
+    column_attributes = utils.config_value(bq, 'product_attributes_column')
+    column_description = utils.config_value(bq, 'product_description_column')
+
+
     query = f"""
     SELECT
-        {config.COLUMN_ID},
-        {config.COLUMN_ATTRIBUTES},
-        {config.COLUMN_DESCRIPTION}
+        {column_id},
+        {column_attributes},
+        {column_description}
     FROM
-        `{config.PRODUCT_REFERENCE_TABLE}`
+        `{table_name}`
     WHERE
-        {config.COLUMN_ID} IN {str(ids).replace('[', '(').replace(']', ')')}
+        {column_id} IN {str(ids).replace('[', '(').replace(']', ')')}
     """
     query_job = bq_client.query(query)
     rows = query_job.result()
     attributes = {}
     for row in rows:
-        attributes[row[config.COLUMN_ID]] = {}
-        attributes[row[config.COLUMN_ID]]['attributes'] = json.loads(
-            row[config.COLUMN_ATTRIBUTES])
-        attributes[row[config.COLUMN_ID]]['description'] = row[
-            config.COLUMN_DESCRIPTION]
+        attributes[row[column_id]] = {}
+        attributes[row[column_id]]['attributes'] = json.loads(
+            row[column_attributes])
+        attributes[row[column_id]]['description'] = row[column_description]
     return attributes
 
 
@@ -68,7 +72,7 @@ def retrieve(
         category: Optional[str] = None,
         image: Optional[str] = None,
         base64: bool = False,
-        num_neighbors: int = config.NUM_NEIGHBORS,
+        num_neighbors: int = int(utils.config_value(utils.SECTION_VECTORS, 'number_of_neighbors')),
         filters: list[str] = []) -> list[dict]:
     """Returns list of attributes based on nearest neighbors.
 
@@ -81,7 +85,7 @@ def retrieve(
         image: can be local file path, GCS URI or base64 encoded image
         base64: True indicates image is base64. False (default) will be
           interpreted as image path (either local or GCS)
-        num_neigbhors: number of nearest neighbors to return for EACH embedding
+        num_neighbors: number of nearest neighbors to return for EACH embedding
         filters: category prefix to restrict results to
 
     Returns:
@@ -200,7 +204,7 @@ def retrieve_and_generate_attributes(
         category: Optional[str] = None,
         image: Optional[str] = None,
         base64: bool = False,
-        num_neighbors: int = config.NUM_NEIGHBORS,
+        num_neighbors: int = int(utils.config_value(utils.SECTION_VECTORS, 'number_of_neighbors')),
         filters: list[str] = []
 ) -> m.ProductAttributes:
     """RAG approach to generating product attributes.

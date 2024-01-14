@@ -1,9 +1,7 @@
-
-
 filegroup(
     name = "loader_config",
     srcs = [
-        "loader.ini",
+        "app.ini",
     ],
     visibility = ["//:__subpackages__"],
 )

@@ -32,10 +32,10 @@ class AttributesTest(unittest.TestCase):
         bq = utils.SECTION_BIG_QUERY
         test = utils.SECTION_TEST
         vectors = utils.SECTION_VECTORS
-        self.testProductId = utils.config_value(test, 'product_id')
-        self.numberOfNeighbors = int(utils.config_value(vectors, 'number_of_neighbors'))
-        self.testImage = utils.config_value(test, 'gcs_image')
-        self.testCategory = utils.config_value(test, 'category_l0')
+        self.testProductId = utils.str_value(test, 'product_id')
+        self.numberOfNeighbors = int(utils.str_value(vectors, 'number_of_neighbors'))
+        self.testImage = utils.str_value(test, 'gcs_image')
+        self.testCategory = utils.str_value(test, 'category_l0')
 
     def test_join_attributes_desc(self):
         res = attributes.join_attributes_desc([self.testProductId])

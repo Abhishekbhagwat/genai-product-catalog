@@ -8,7 +8,7 @@ class FetchImageCommand:
 
     def __init__(self):
         config = configparser.ConfigParser()
-        config.read('conf/loader.ini')
+        config.read('conf/app.ini')
         FetchImageCommand.bucket_name = config['DEFAULT']['bucket_name']
 
     @staticmethod

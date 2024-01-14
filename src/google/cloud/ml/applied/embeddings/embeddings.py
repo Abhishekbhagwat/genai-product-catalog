@@ -36,9 +36,9 @@ class EmbeddingPredictionClient:
     """Wrapper around Prediction Service Client."""
 
     def __init__(self):
-        project = utils.config_value(utils.SECTION_PROJECT, 'id')
-        location = utils.config_value(utils.SECTION_PROJECT, 'location')
-        api_regional_endpoint = utils.config_value(utils.SECTION_PROJECT, 'endpoint')
+        project = utils.str_value(utils.SECTION_PROJECT, 'id')
+        location = utils.str_value(utils.SECTION_PROJECT, 'location')
+        api_regional_endpoint = utils.str_value(utils.SECTION_PROJECT, 'endpoint')
 
         client_options = {"api_endpoint": api_regional_endpoint}
         # Initialize client that will be used to create and send requests.
@@ -121,7 +121,7 @@ def embed(
         text: str,
         image: Optional[str] = None,
         base64: bool = False,
-        project: str = utils.config_value(utils.SECTION_PROJECT, 'id')) -> EmbeddingResponse:
+        project: str = utils.str_value(utils.SECTION_PROJECT, 'id')) -> EmbeddingResponse:
     """Invoke vertex multimodal embedding API.
 
     Args:

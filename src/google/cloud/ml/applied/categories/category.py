@@ -18,11 +18,10 @@ import re
 from collections import defaultdict
 from typing import Optional
 
-import config
-import domain_model as m
-import embeddings
-import nearest_neighbors
-import utils
+from ..model import domain_model as m
+from ..embeddings import embeddings
+from ..knn import nearest_neighbors
+from ..utils import utils
 
 bq_client = utils.get_bq_client()
 llm = utils.get_llm()

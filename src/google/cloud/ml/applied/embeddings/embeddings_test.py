@@ -60,7 +60,7 @@ class EmbeddingsTest(unittest.TestCase):
     def test_embeddings_api_with_image(self):
         res = embeddings.embed(
             'This is a test description',
-            utils.config_value(utils.SECTION_TEST, 'gcs_image'),
+            utils.str_value(utils.SECTION_TEST, 'gcs_image'),
         )
         self.assertEqual(len(res.text_embedding), 1408)
         self.assertEqual(len(res.image_embedding), 1408)

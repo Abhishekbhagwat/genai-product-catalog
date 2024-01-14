@@ -23,7 +23,7 @@ from google.cloud import aiplatform_v1
 from google.cloud import bigquery
 from vertexai.preview.generative_models import (GenerativeModel)
 
-DEFAULT_CONFIG = 'conf/loader.ini'
+DEFAULT_CONFIG = 'conf/app.ini'
 SECTION_DEFAULT = 'default'
 SECTION_PROJECT = 'project'
 SECTION_GCS = 'gcs'
@@ -37,30 +37,35 @@ config = configparser.ConfigParser()
 config.read(DEFAULT_CONFIG)
 
 
-def config_value(section: str, key: str) -> str:
+def str_value(section: str, key: str) -> str:
     return config[section][key]
 
+
+def int_value(section: str = SECTION_DEFAULT, key: str = '') -> int:
+    return int(config[section][key])
+
+
 @cache
-def get_bq_client(project=config_value(SECTION_PROJECT, 'id')):
+def get_bq_client(project=str_value(SECTION_PROJECT, 'id')):
     return bigquery.Client(project)
 
 
 @cache
 def get_llm():
-    vertexai.init(project=config_value(SECTION_PROJECT, 'id'),
-                  location=config_value(SECTION_PROJECT, 'location'))
+    vertexai.init(project=str_value(SECTION_PROJECT, 'id'),
+                  location=str_value(SECTION_PROJECT, 'location'))
 
     return (vertexai.
             language_models.
             TextGenerationModel.
-            from_pretrained(config_value(SECTION_MODELS, 'llm')))
+            from_pretrained(str_value(SECTION_MODELS, 'llm')))
 
 
 @cache
 def get_gemini_pro_vision() -> Any:
     multimodal_model = (
         GenerativeModel(
-            config_value(SECTION_MODELS, 'gemini')))
+            str_value(SECTION_MODELS, 'gemini')))
 
     return multimodal_model
 
@@ -68,7 +73,7 @@ def get_gemini_pro_vision() -> Any:
 @cache
 def get_vector_search_index_client():
     index_client = aiplatform_v1.IndexServiceClient(
-        client_options=dict(api_endpoint=config_value(SECTION_PROJECT, 'endpoint')))
+        client_options=dict(api_endpoint=str_value(SECTION_PROJECT, 'endpoint')))
 
     return index_client
 

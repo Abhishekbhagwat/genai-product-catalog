@@ -40,10 +40,10 @@ def join_attributes_desc(ids: list[str]) -> dict[str:dict]:
             description: e.g. 'This is a description'
     """
     bq = utils.SECTION_BIG_QUERY
-    table_name = utils.config_value(bq, 'product_table')
-    column_id = utils.config_value(bq, 'product_id_column')
-    column_attributes = utils.config_value(bq, 'product_attributes_column')
-    column_description = utils.config_value(bq, 'product_description_column')
+    table_name = utils.str_value(bq, 'product_table')
+    column_id = utils.str_value(bq, 'product_id_column')
+    column_attributes = utils.str_value(bq, 'product_attributes_column')
+    column_description = utils.str_value(bq, 'product_description_column')
 
 
     query = f"""
@@ -72,7 +72,7 @@ def retrieve(
         category: Optional[str] = None,
         image: Optional[str] = None,
         base64: bool = False,
-        num_neighbors: int = int(utils.config_value(utils.SECTION_VECTORS, 'number_of_neighbors')),
+        num_neighbors: int = int(utils.str_value(utils.SECTION_VECTORS, 'number_of_neighbors')),
         filters: list[str] = []) -> list[dict]:
     """Returns list of attributes based on nearest neighbors.
 
@@ -204,7 +204,7 @@ def retrieve_and_generate_attributes(
         category: Optional[str] = None,
         image: Optional[str] = None,
         base64: bool = False,
-        num_neighbors: int = int(utils.config_value(utils.SECTION_VECTORS, 'number_of_neighbors')),
+        num_neighbors: int = int(utils.str_value(utils.SECTION_VECTORS, 'number_of_neighbors')),
         filters: list[str] = []
 ) -> m.ProductAttributes:
     """RAG approach to generating product attributes.

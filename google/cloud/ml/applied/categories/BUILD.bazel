@@ -1,0 +1,25 @@
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@python_deps//:requirements.bzl", "requirement")
+
+PY_DEPS = [
+    requirement("google-cloud-aiplatform"),
+    "//google/cloud/ml/applied/model:model",
+]
+
+py_library(
+    name = "categories",
+    srcs = [
+        "category.py",
+    ],
+    imports = ["."],
+    srcs_version = "PY3",
+    visibility = ["//visibility:public"],
+    deps = PY_DEPS,
+)
+
+py_test(
+    name = "category_test",
+    srcs = ["category_test.py"],
+    imports = ["."],
+    deps = [":categories"] + PY_DEPS,
+)

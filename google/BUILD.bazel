@@ -1,0 +1,28 @@
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@python_deps//:requirements.bzl", "requirement")
+
+PY_DEPS = [
+    requirement("google-cloud-aiplatform"),
+    requirement("google-cloud-bigquery"),
+]
+
+py_library(
+    name = "google",
+    srcs = [
+        "//google/cloud/ml/applied/attributes",
+        "//google/cloud/ml/applied/categories",
+        "//google/cloud/ml/applied/embeddings",
+        "//google/cloud/ml/applied/images",
+        "//google/cloud/ml/applied/knn",
+        "//google/cloud/ml/applied/marketing",
+        "//google/cloud/ml/applied/model",
+        "//google/cloud/ml/applied/utils",
+    ],
+    data = [
+        "//conf:app_config",
+    ],
+    imports = ["."],
+    srcs_version = "PY3",
+    visibility = ["//visibility:public"],
+    deps = PY_DEPS,
+)

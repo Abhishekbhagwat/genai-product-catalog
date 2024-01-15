@@ -20,7 +20,7 @@ py_library(
         "model.py",
     ],
     data = [
-        "//conf:loader_config",
+        "//conf:app_config",
         "//third_party/flipkart:flipkart_data",
     ],
     imports = ["."],

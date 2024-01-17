@@ -18,7 +18,7 @@ import json
 import typing
 import urllib.request
 
-from google.cloud.ml.applide.model import domain_model as m
+from google.cloud.ml.applied.model import domain_model as m
 from google.cloud.ml.applide.utils import utils
 from vertexai.preview.generative_models import (
   Image,

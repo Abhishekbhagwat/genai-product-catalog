@@ -22,6 +22,7 @@ from google.cloud.ml.applied.model import domain_model as m
 from google.cloud.ml.applied.embeddings import embeddings
 from google.cloud.ml.applied.utils import utils
 from google.cloud.ml.applied.knn import nearest_neighbors
+from google.cloud.ml.applied.config import Config
 
 bq_client = utils.get_bq_client()
 llm = utils.get_llm()
@@ -40,12 +41,11 @@ def join_attributes_desc(ids: list[str]) -> dict[str:dict]:
             attributes: e.g. {'color':'green', 'pattern': striped}
             description: e.g. 'This is a description'
     """
-    bq = utils.SECTION_BIG_QUERY
-    table_name = utils.str_value(bq, 'product_table')
-    column_id = utils.str_value(bq, 'product_id_column')
-    column_attributes = utils.str_value(bq, 'product_attributes_column')
-    column_description = utils.str_value(bq, 'product_description_column')
-
+    bq = Config.SECTION_BIG_QUERY
+    table_name = Config.value(bq, 'product_table')
+    column_id = Config.value(bq, 'product_id_column')
+    column_attributes = Config.value(bq, 'product_attributes_column')
+    column_description = Config.value(bq, 'product_description_column')
 
     query = f"""
     SELECT
@@ -61,10 +61,19 @@ def join_attributes_desc(ids: list[str]) -> dict[str:dict]:
     rows = query_job.result()
     attributes = {}
     for row in rows:
-        attributes[row[column_id]] = {}
-        attributes[row[column_id]]['attributes'] = \
-            json.loads(row[column_attributes])
-        attributes[row[column_id]]['description'] = row[column_description]
+        id_value = row[column_id]
+        logging.info(row)
+        if isinstance(row[column_attributes], str):
+            attributes[id_value] = {
+                'attributes': json.loads(row[column_attributes]),
+                'description': row[column_description]
+            }
+        else:
+            attributes[id_value] = {
+                'attributes': {},
+                'description': row[column_description]
+            }
+
     return attributes
 
 
@@ -85,7 +94,6 @@ def retrieve(
         image: can be local file path, GCS URI or base64 encoded image
         base64: True indicates image is base64. False (default) will be
           interpreted as image path (either local or GCS)
-        num_neighbors: number of nearest neighbors to return for EACH embedding
         filters: category prefix to restrict results to
 
     Returns:
@@ -196,7 +204,7 @@ def generate_attributes(
     except Exception as e:
         logging.error(e)
         raise ValueError(f'LLM Response: {res} is not in the expected format')
-    return m.dict_to_attribute_values(formatted_res)
+    return formatted_res
 
 
 def retrieve_and_generate_attributes(

@@ -19,25 +19,27 @@ from collections import namedtuple
 
 from google.cloud import aiplatform
 from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import Namespace
-from google.cloud.ml.applied.utils import utils
+
+from google.cloud.ml.applied.config import Config
 
 Neighbor = namedtuple('Neighbor', ['id', 'distance'])
 index_endpoint = aiplatform.MatchingEngineIndexEndpoint(
-    index_endpoint_name=utils.str_value(utils.SECTION_VECTORS, 'endpoint_id'),
-    project=utils.str_value(utils.SECTION_PROJECT, 'id'),
-    location=utils.str_value(utils.SECTION_PROJECT, 'location')
+    index_endpoint_name=Config.value(Config.SECTION_VECTORS, 'endpoint_id'),
+    project=Config.value(Config.SECTION_PROJECT, 'id'),
+    location=Config.value(Config.SECTION_PROJECT, 'location')
 )
 
-deployed_index = utils.str_value(utils.SECTION_VECTORS, 'deployed_index')
-number_of_neighbors = utils.int_value(utils.SECTION_VECTORS, 'number_of_neighbors')
-category_depth = utils.int_value(utils.SECTION_CATEGORY, 'depth')
-category_filter = utils.list_value(utils.SECTION_CATEGORY, 'filter')
+deployed_index = Config.value(Config.SECTION_VECTORS, 'deployed_index')
+number_of_neighbors = Config.value(Config.SECTION_VECTORS, 'number_of_neighbors')
+category_depth = Config.value(Config.SECTION_CATEGORY, 'depth')
+category_filter = Config.value(Config.SECTION_CATEGORY, 'filter')
 
 
 def get_nn(
         embeds: list[list[float]],
-        filters: list[str] = []) -> list[Neighbor]:
-    """Fetch nearest neigbhors in vector store.
+        filters: list[str] = [],
+        num_neighbors: int = number_of_neighbors) -> list[Neighbor]:
+    """Fetch nearest neighbors in vector store.
 
     Neighbors are fetched independently for each embedding then unioned.
 
@@ -49,7 +51,7 @@ def get_nn(
         - example 2: ['Mens', 'Pants']
             will only return suggestions with top level category 'Mens'
             and second level category 'Pants'
-        num_neigbhors: number of nearest neighbors to return for EACH embedding
+        num_neighbors: number of nearest neighbors to return for EACH embedding
 
     Returns:
         A list of named tuples containing the the following attributes
@@ -63,10 +65,13 @@ def get_nn(
 
     filters = [Namespace(category_filter[i], [f]) for i, f in
                enumerate(filters)]
+
     response = index_endpoint.find_neighbors(
         deployed_index_id=deployed_index,
         queries=embeds,
-        num_neighbors=number_of_neighbors,
+        num_neighbors=num_neighbors,
         filter=filters
     )
-    return [Neighbor(r.id, r.distance) for neighbor in response for r in neighbor]
+
+    return [Neighbor(r.id, r.distance) for neighbor
+            in response for r in neighbor]

@@ -1,0 +1,2 @@
+
+test --test_env=GOOGLE_CLOUD_PROJECT=retail_shared_demos

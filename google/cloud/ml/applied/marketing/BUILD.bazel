@@ -3,6 +3,9 @@ load("@python_deps//:requirements.bzl", "requirement")
 
 PY_DEPS = [
     requirement("google-cloud-aiplatform"),
+    "//google/cloud/ml/applied",
+    "//google/cloud/ml/applied/model",
+    "//google/cloud/ml/applied/utils",
 ]
 
 py_library(
@@ -18,7 +21,8 @@ py_library(
 
 py_test(
     name = "marketing_test",
+    size = "small",
     srcs = ["marketing_test.py"],
     imports = ["."],
-    deps = [":marketing"],
+    deps = [":marketing"] + PY_DEPS,
 )

@@ -22,20 +22,21 @@ These tests assume:
 import logging
 import unittest
 import category
-from ..utils import utils
+
+from google.cloud.ml.applied.model import domain_model as m
+from google.cloud.ml.applied.config import Config
 
 logging.basicConfig(level=logging.INFO)
 
 
 class CategoryTest(unittest.TestCase):
     def setUp(self):
-        bq = utils.SECTION_BIG_QUERY
-        test = utils.SECTION_TEST
-        vectors = utils.SECTION_VECTORS
-        self.testProductId = utils.str_value(test, 'product_id')
-        self.numberOfNeighbors = int(utils.str_value(vectors, 'number_of_neighbors'))
-        self.testImage = utils.str_value(test, 'gcs_image')
-        self.testCategory = utils.str_value(test, 'category')
+        test = Config.SECTION_TEST
+        vectors = Config.SECTION_VECTORS
+        self.testProductId = Config.value(test, 'product_id')
+        self.numberOfNeighbors = Config.value(vectors, 'number_of_neighbors')
+        self.testImage = Config.value(test, 'gcs_image')
+        self.testCategory = Config.value(test, 'category')
 
     def test_join_categories(self):
         res = category.join_categories([self.testProductId])
@@ -69,8 +70,8 @@ class CategoryTest(unittest.TestCase):
             self.testImage
         )
         logging.info(res)
-        self.assertIsInstance(res, list)
-        self.assertGreater(len(res), 0)
+        self.assertIsInstance(res, m.CategoryList)
+        self.assertGreater(len(res.values), 0)
 
     def test_retrieve_and_rank_with_filter(self):
         res = category.retrieve_and_rank(
@@ -79,8 +80,8 @@ class CategoryTest(unittest.TestCase):
             filters=[self.testCategory]
         )
         logging.info(res)
-        self.assertIsInstance(res, list)
-        self.assertGreater(len(res), 0)
+        self.assertIsInstance(res, m.CategoryList)
+        self.assertGreater(len(res.values), 0)
 
     def test_retrieve_and_rank_with_bad_filter(self):
         res = category.retrieve_and_rank(

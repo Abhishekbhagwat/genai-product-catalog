@@ -24,8 +24,10 @@ https://cloud.google.com/vertex-ai/docs/generative-ai/embeddings/get-multimodal-
 """
 
 import unittest
-import embeddings
-from google.cloud.ml.applied.utils import utils
+
+from google.cloud.ml.applied.embeddings import embeddings
+
+from google.cloud.ml.applied.config import Config
 
 
 class EmbeddingsTest(unittest.TestCase):
@@ -60,7 +62,7 @@ class EmbeddingsTest(unittest.TestCase):
     def test_embeddings_api_with_image(self):
         res = embeddings.embed(
             'This is a test description',
-            utils.str_value(utils.SECTION_TEST, 'gcs_image'),
+            Config.value(Config.SECTION_TEST, 'gcs_image'),
         )
         self.assertEqual(len(res.text_embedding), 1408)
         self.assertEqual(len(res.image_embedding), 1408)
@@ -68,8 +70,8 @@ class EmbeddingsTest(unittest.TestCase):
     def test_embeddings_api_with_image_base64(self):
         image_base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
         res = embeddings.embed(
-            'This is a test description',
-            image_base64,
+            text='This is a test description',
+            image=image_base64,
             base64=True
         )
         self.assertEqual(len(res.text_embedding), 1408)

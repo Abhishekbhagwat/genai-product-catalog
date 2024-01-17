@@ -24,8 +24,7 @@ from typing import NamedTuple, Optional, Sequence
 from google.cloud import aiplatform
 from google.protobuf import struct_pb2
 
-from google.cloud.ml.applied.utils import utils
-
+from google.cloud.ml.applied.config import Config
 
 class EmbeddingResponse(NamedTuple):
     text_embedding: Sequence[float]
@@ -36,9 +35,9 @@ class EmbeddingPredictionClient:
     """Wrapper around Prediction Service Client."""
 
     def __init__(self):
-        project = utils.str_value(utils.SECTION_PROJECT, 'id')
-        location = utils.str_value(utils.SECTION_PROJECT, 'location')
-        api_regional_endpoint = utils.str_value(utils.SECTION_PROJECT, 'endpoint')
+        project = Config.value(Config.SECTION_PROJECT, 'id')
+        location = Config.value(Config.SECTION_PROJECT, 'location')
+        api_regional_endpoint = Config.value(Config.SECTION_PROJECT, 'endpoint')
 
         client_options = {"api_endpoint": api_regional_endpoint}
         # Initialize client that will be used to create and send requests.
@@ -121,7 +120,7 @@ def embed(
         text: str,
         image: Optional[str] = None,
         base64: bool = False,
-        project: str = utils.str_value(utils.SECTION_PROJECT, 'id')) -> EmbeddingResponse:
+        project: str = Config.value('project', 'id')) -> EmbeddingResponse:
     """Invoke vertex multimodal embedding API.
 
     Args:

@@ -3,7 +3,11 @@ load("@python_deps//:requirements.bzl", "requirement")
 
 PY_DEPS = [
     requirement("google-cloud-aiplatform"),
+    "//google/cloud/ml/applied",
     "//google/cloud/ml/applied/model:model",
+    "//google/cloud/ml/applied/embeddings:embeddings",
+    "//google/cloud/ml/applied/knn:knn",
+    "//google/cloud/ml/applied/utils:utils",
 ]
 
 py_library(

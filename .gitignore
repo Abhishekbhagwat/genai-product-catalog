@@ -5,3 +5,5 @@ venv
 bazel*
 .ijwb
 
+user.bazelrc
+

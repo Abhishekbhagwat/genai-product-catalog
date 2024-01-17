@@ -3,6 +3,7 @@ load("@python_deps//:requirements.bzl", "requirement")
 
 PY_DEPS = [
     requirement("google-cloud-aiplatform"),
+    "//google/cloud/ml/applied",
     "//google/cloud/ml/applied/model",
     "//google/cloud/ml/applied/utils",
     "//google/cloud/ml/applied/knn",
@@ -22,6 +23,7 @@ py_library(
 
 py_test(
     name = "attributes_test",
+    size = "small",
     srcs = ["attributes_test.py"],
     imports = ["."],
     deps = [":attributes"] + PY_DEPS,

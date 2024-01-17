@@ -11,6 +11,7 @@ py_library(
     name = "embeddings",
     srcs = [
         "embeddings.py",
+        "search.py",
     ],
     imports = ["."],
     srcs_version = "PY3",

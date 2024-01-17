@@ -15,12 +15,12 @@
 
 """Expose REST API for product cataloging functionality."""
 
-import attributes
-import category
-import domain_model as m
-import image_to_text
-import marketing
-import update_search_index
+from google.cloud.ml.applied.embeddings import search
+from google.cloud.ml.applied.attributes import attributes
+from google.cloud.ml.applied.categories import category
+from google.cloud.ml.applied.model import domain_model as m
+from google.cloud.ml.applied.images import image_to_text
+from google.cloud.ml.applied.marketing import marketing
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -150,10 +150,10 @@ def generate_marketing_copy(model: m.MarketingRequest) -> m.TextValue:
 
 @app.post("/api/v1/genai/products", status_code=202, tags=['Products'])
 def product_create_index(product: m.Product) -> m.Status:
-    update_search_index.upsert_dp(product.id,
-                                  product.description,
-                                  product.image_uri,
-                                  product.category)
+    search.upsert_dp(product.id,
+                     product.description,
+                     product.image_uri,
+                     product.category)
     return m.Status(status='OK')
 
 
@@ -165,7 +165,7 @@ def update_vector_search_index(product_id: str, product: m.Product) -> m.Status:
     Adding the new/updated product info into already built&deployed
         Vector Search Index
     """
-    update_search_index.upsert_dp(product_id,
+    search.upsert_dp(product_id,
                                   product.description,
                                   product.image_uri,
                                   product.category)
@@ -185,5 +185,5 @@ def remove_product_from_vector_search(product_id: str) -> None:
     Returns:
     If successful, the response body is empty[https://cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.indexes/removeDatapoints}
     """
-    update_search_index.delete_dp(product_id)
+    search.delete_dp(product_id)
     return None

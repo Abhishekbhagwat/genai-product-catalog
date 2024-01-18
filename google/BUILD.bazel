@@ -19,7 +19,7 @@ py_library(
         "//google/cloud/ml/applied/utils",
     ],
     data = [
-        "//conf:app_config",
+        "//conf:config",
     ],
     imports = ["."],
     srcs_version = "PY3",

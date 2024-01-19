@@ -11,6 +11,7 @@ PY_DEPS = [
 py_library(
     name = "marketing",
     srcs = [
+        "__init__.py",
         "marketing.py",
     ],
     imports = ["."],

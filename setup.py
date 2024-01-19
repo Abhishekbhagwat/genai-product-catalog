@@ -35,24 +35,24 @@ packages = [
 ]
 
 dependencies = [
-  "requests"
-  "scipy",
-  "numpy",
-  "mediapipe",
-  "pandas",
+  "requests>=2.31.0",
+  "scipy>=1.11.4",
+  "numpy>=1.26.3",
+  "mediapipe>==0.10.9",
+  "pandas>=2.1.4",
   "en_core_web_sm@https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.4.0/en_core_web_sm-3.4.0-py3-none-any.whl"
-  "spacy",
-  "spacy-cleaner",
-  "json-pickle",
-  "google-api-python-client",
+  "spacy>=3.4.4",
+  "spacy-cleaner>=3.1.0",
+  "json-pickle>=3.0.2",
+  "google-api-python-client>=2.113.0",
   "google-cloud-aiplatform>=1.39.0",
-  "google-cloud-storage",
-  "google-cloud-bigquery",
-  "gcloud",
-  "grpclib",
-  "grpcio",
+  "google-cloud-storage>=2.14.0",
+  "google-cloud-bigquery>=3.15.0",
+  "gcloud>=0.18.3",
+  "grpclib==0.4.7",
+  "grpcio==1.60.0",
   "fastapi>=0.108.0",
-  "uvicorn",
+  "uvicorn>=0.25.0",
 ]
 
 setuptools.setup(

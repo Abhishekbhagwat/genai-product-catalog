@@ -8,6 +8,7 @@ PY_DEPS = [
 py_library(
     name = "model",
     srcs = [
+        "__init__.py",
         "domain_model.py",
     ],
     imports = ["."],

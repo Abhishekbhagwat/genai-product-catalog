@@ -21,3 +21,5 @@ grpcio
 
 fastapi
 uvicorn
+
+pydoc-markdown

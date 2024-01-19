@@ -9,6 +9,7 @@ PY_DEPS = [
 py_library(
     name = "utils",
     srcs = [
+        "__init__.py",
         "utils.py",
     ],
     imports = ["."],

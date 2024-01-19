@@ -10,6 +10,7 @@ PY_DEPS = [
 py_library(
     name = "images",
     srcs = [
+        "__init__.py",
         "image_to_text.py",
     ],
     imports = ["."],

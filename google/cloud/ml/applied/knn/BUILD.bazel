@@ -10,6 +10,7 @@ PY_DEPS = [
 py_library(
     name = "knn",
     srcs = [
+        "__init__.py",
         "nearest_neighbors.py",
     ],
     imports = ["."],

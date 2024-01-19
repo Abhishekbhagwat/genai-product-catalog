@@ -47,3 +47,16 @@ test --test_env=GOOGLE_CLOUD_PROJECT=<YOUR_PROJECT_NAME>
 ## Running the examples
 
 ### Cloud Environment Setup
+
+
+## Dependencies
+
+### Mac
+
+Install graphviz `brew install graphviz && brew install xdot` 
+
+Visualize the dependency graph
+
+```shell
+bazel query "allpaths(//google ...)" | dot -Tpng -o docs/dependencies.png
+```

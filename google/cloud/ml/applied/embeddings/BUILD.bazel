@@ -10,6 +10,7 @@ PY_DEPS = [
 py_library(
     name = "embeddings",
     srcs = [
+        "__init__.py",
         "embeddings.py",
         "search.py",
     ],

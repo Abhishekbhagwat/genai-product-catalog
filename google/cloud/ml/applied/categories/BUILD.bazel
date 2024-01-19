@@ -13,6 +13,7 @@ PY_DEPS = [
 py_library(
     name = "categories",
     srcs = [
+        "__init__.py",
         "category.py",
     ],
     imports = ["."],

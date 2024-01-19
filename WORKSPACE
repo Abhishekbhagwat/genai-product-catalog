@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -163,3 +163,81 @@ pip_parse(
 load("@python_deps//:requirements.bzl", local_deps = "install_deps")
 
 local_deps()
+
+###############################################################################
+# GO Tool Chain (To support docs build)
+###############################################################################
+
+http_archive(
+    name = "io_bazel_rules_go",
+    sha256 = "51dc53293afe317d2696d4d6433a4c33feedb7748a9e352072e2ec3c0dafd2c6",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.40.1/rules_go-v0.40.1.zip",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.40.1/rules_go-v0.40.1.zip",
+    ],
+)
+
+load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
+
+go_rules_dependencies()
+
+go_register_toolchains(version = "1.20.7")
+
+###############################################################################
+# Rules Package for Tar
+###############################################################################
+http_archive(
+    name = "rules_pkg",
+    sha256 = "8f9ee2dc10c1ae514ee599a8b42ed99fa262b757058f65ad3c384289ff70c4b8",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.9.1/rules_pkg-0.9.1.tar.gz",
+        "https://github.com/bazelbuild/rules_pkg/releases/download/0.9.1/rules_pkg-0.9.1.tar.gz",
+    ],
+)
+
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
+
+rules_pkg_dependencies()
+
+###############################################################################
+# Hugo Tool Chain
+###############################################################################
+
+RULES_HUGO_COMMIT = "02234789fa9f2112807c1642eacb9f9728fc179d"
+
+RULES_HUGO_SHA256 = "4ce20c981ad50ac0c956e85ef991e59b204778bde59d81e40be05450259ae969"
+
+RULES_HUGO_VERSION = "0.101.0"
+
+HUGO_THEME_SHA256 = "7fdd57f7d4450325a778629021c0fff5531dc8475de6c4ec70ab07e9484d400e"
+
+HUGO_THEME_URL = "https://github.com/thegeeklab/hugo-geekdoc/releases/download/v0.34.2/hugo-geekdoc.tar.gz"
+
+http_archive(
+    name = "build_stack_rules_hugo",
+    sha256 = RULES_HUGO_SHA256,
+    strip_prefix = "rules_hugo-%s" % RULES_HUGO_COMMIT,
+    url = "https://github.com/rrmcguinness/rules_hugo/archive/%s.zip" % RULES_HUGO_COMMIT,
+)
+
+load("@build_stack_rules_hugo//hugo:rules.bzl", "hugo_repository")
+
+hugo_repository(
+    name = "hugo",
+    extended = True,
+    version = RULES_HUGO_VERSION,
+)
+
+# Create a readable archive from a GitHub Hugo Theme that DOES NOT support the theme layout.
+http_archive(
+    name = "theme_geekdoc",
+    build_file_content = """
+filegroup(
+    name = "files",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:public"],
+)
+    """,
+    sha256 = HUGO_THEME_SHA256,
+    url = HUGO_THEME_URL,
+)

@@ -22,29 +22,27 @@ These tests assume:
 import logging
 import unittest
 from google.cloud.ml.applied.attributes import attributes
-from google.cloud.ml.applied.utils import utils
+from google.cloud.ml.applied.config import Config
 
 logging.basicConfig(level=logging.INFO)
 
 
 class AttributesTest(unittest.TestCase):
-
     def setUp(self):
-        test = utils.SECTION_TEST
-        vectors = utils.SECTION_VECTORS
-        self.testProductId = utils.str_value(test,
-                                             'product_id')
 
-        self.numberOfNeighbors = int(utils.str_value(vectors,
-                                                     'number_of_neighbors'))
+        test = Config.SECTION_TEST
+        vectors = Config.SECTION_VECTORS
+        self.testProductId = Config.value(test, 'product_id')
 
-        self.testImage = utils.str_value(test, 'gcs_image')
+        self.numberOfNeighbors = int(Config.value(vectors,
+                                                  'number_of_neighbors'))
 
-        self.testCategory = utils.str_value(test, 'category')
+        self.testImage = Config.value(test, 'gcs_image')
+
+        self.testCategory = Config.value(test, 'category')
 
     def test_join_attributes_desc(self):
-        product_ids = [].append(self.testProductId)
-        res = attributes.join_attributes_desc(product_ids)
+        res = attributes.join_attributes_desc([self.testProductId])
         self.assertIsNotNone(res)
         self.assertIsInstance(res, dict)
         for k, v in res.items():
@@ -67,7 +65,7 @@ class AttributesTest(unittest.TestCase):
 
     def test_retrieve_no_category(self):
         res = attributes.retrieve(
-            desciption='This is a test description',
+            desc='This is a test description',
             image=self.testImage
         )
         logging.info(res)
@@ -95,7 +93,7 @@ class AttributesTest(unittest.TestCase):
 
     def test_retrieve_and_generate_attributes(self):
         res = attributes.retrieve_and_generate_attributes(
-            description='Fleece Jacket',
+            desc='Fleece Jacket',
             image=self.testImage
         )
         logging.info(res)
@@ -104,7 +102,7 @@ class AttributesTest(unittest.TestCase):
 
     def test_retrieve_and_generate_attributes_with_filter(self):
         res = attributes.retrieve_and_generate_attributes(
-            description='Fleece Jacket',
+            desc='Fleece Jacket',
             image=self.testImage,
             filters=[self.testCategory],
         )
@@ -114,7 +112,7 @@ class AttributesTest(unittest.TestCase):
 
     def test_retrieve_and_generate_attributes_with_bad_filter(self):
         res = attributes.retrieve_and_generate_attributes(
-            description='Fleece Jacket',
+            desc='Fleece Jacket',
             image=self.testImage,
             filters=['XYZunknowncategory'],
         )

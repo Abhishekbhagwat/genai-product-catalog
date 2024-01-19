@@ -13,7 +13,6 @@
 #  limitations under the License.
 
 """Functions common to several modules."""
-import configparser
 import vertexai
 import vertexai.preview
 
@@ -22,64 +21,31 @@ from typing import Any
 from google.cloud import aiplatform_v1
 from google.cloud import bigquery
 from vertexai.preview.generative_models import (GenerativeModel)
+from google.cloud.ml.applied.config import Config
 
-DEFAULT_CONFIG = 'conf/app.ini'
-SECTION_DEFAULT = 'default'
-SECTION_PROJECT = 'project'
-SECTION_GCS = 'gcs'
-SECTION_MODELS = 'models'
-SECTION_VECTORS = 'vectors'
-SECTION_BIG_QUERY = 'big_query'
-SECTION_CATEGORY = 'category'
-SECTION_TEST = 'test'
-
-config = configparser.ConfigParser()
-config.read(DEFAULT_CONFIG)
-
-
-def str_value(section: str, key: str) -> str:
-    return config[section][key]
-
-
-def int_value(section: str = SECTION_DEFAULT, key: str = '') -> int:
-    return int(config[section][key])
-
-
-def bool_value(section: str = SECTION_DEFAULT, key: str = '') -> bool:
-    str_val = str_value(section, key)
-    return str_val is not None and str_val.lower() == 'true'
-
-
-def list_value(section: str = SECTION_DEFAULT, key: str = '') -> list:
-    str_val = str_value(section, key)
-    out = []
-    if str is not None:
-        out.extend(str_val.replace('[', '').replace(']', '').split('.'))
-
-    return out
-
+conf = Config()
 
 @cache
-def get_bq_client(project=str_value(SECTION_PROJECT, 'id')):
+def get_bq_client(project=conf.value(Config.SECTION_PROJECT, 'id')):
     return bigquery.Client(project)
 
 
 @cache
 def get_llm():
-    vertexai.init(project=str_value(SECTION_PROJECT, 'id'),
-                  location=str_value(SECTION_PROJECT, 'location'))
+    vertexai.init(project=conf.value(Config.SECTION_PROJECT, 'id'),
+                  location=conf.value(Config.SECTION_PROJECT, 'location'))
 
     return (vertexai.
             language_models.
             TextGenerationModel.
-            from_pretrained(str_value(SECTION_MODELS, 'llm')))
+            from_pretrained(conf.value(Config.SECTION_MODELS, 'llm')))
 
 
 @cache
 def get_gemini_pro_vision() -> Any:
     multimodal_model = (
         GenerativeModel(
-            str_value(SECTION_MODELS, 'gemini')))
+          conf.value(Config.SECTION_MODELS, 'gemini')))
 
     return multimodal_model
 
@@ -87,8 +53,7 @@ def get_gemini_pro_vision() -> Any:
 @cache
 def get_vector_search_index_client():
     index_client = aiplatform_v1.IndexServiceClient(
-        client_options=dict(api_endpoint=str_value(SECTION_PROJECT, 'endpoint')))
-
+        client_options=dict(api_endpoint=conf.value(Config.SECTION_PROJECT, 'endpoint')))
     return index_client
 
 

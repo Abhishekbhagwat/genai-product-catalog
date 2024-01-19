@@ -1,7 +1,5 @@
 # Contributing
 
-
-
 ## Contributor's Setup
 
 Follow the setup instructions for Data Scientists, plus the following:
@@ -37,6 +35,28 @@ bazel test //...
 > NOTE: Bazel build a hermetic python environment, so it WILL NOT
 > break your local python installs.
 
+## Create a user.bazelrc
+
+In the project root, create a file named `user.bazelrc`
+and add the following contents:
+
+```text
+test --test_env=GOOGLE_CLOUD_PROJECT=<YOUR_PROJECT_NAME>
+```
+
 ## Running the examples
 
 ### Cloud Environment Setup
+
+
+## Dependencies
+
+### Mac
+
+Install graphviz `brew install graphviz && brew install xdot` 
+
+Visualize the dependency graph
+
+```shell
+bazel query "allpaths(//google ...)" | dot -Tpng -o docs/dependencies.png
+```

@@ -19,31 +19,30 @@ from collections import defaultdict
 from typing import Optional
 
 from google.cloud.ml.applied.model import domain_model as m
-from ..embeddings import embeddings
-from ..knn import nearest_neighbors
-from ..utils import utils
+from google.cloud.ml.applied.embeddings import embeddings
+from google.cloud.ml.applied.knn import nearest_neighbors
+from google.cloud.ml.applied.utils import utils
+from google.cloud.ml.applied.config import Config
 
 bq_client = utils.get_bq_client()
 llm = utils.get_llm()
 
-category_depth = utils.int_value(utils.SECTION_CATEGORY, 'depth')
-allow_trailing_nulls = utils.bool_value(key='allow_trailing_spaces')
-number_of_neighbors = utils.int_value(utils.SECTION_VECTORS,
+category_depth = Config.value(Config.SECTION_CATEGORY, 'depth')
+allow_trailing_nulls = Config.value(key='allow_trailing_spaces')
+number_of_neighbors = Config.value(Config.SECTION_VECTORS,
                                       'number_of_neighbors')
 
-bq = utils.SECTION_BIG_QUERY
-table_product = utils.str_value(bq, 'product_table')
-column_id = utils.str_value(bq, 'product_id_column')
-column_categories = utils.list_value(bq, 'product_category_column_list')
+bq = Config.SECTION_BIG_QUERY
+table_product = Config.value(bq, 'product_table')
+column_id = Config.value(bq, 'product_id_column')
+column_categories = Config.value(bq, 'product_category_column_list')
 
 
-def join_categories(ids: list[str]) -> dict[
-                                                                     str:list[str]]:
+def join_categories(ids: list[str]) -> dict[str:list[str]]:
     """Given list of product IDs, join category names.
 
     Args:
         ids: list of product IDs used to join against master product table
-        category_depth: number of levels in category hierarchy to return
 
     Returns:
         dict mapping product IDs to category name. The category name will be
@@ -74,7 +73,7 @@ def join_categories(ids: list[str]) -> dict[
                         break  # return existing categories
                 else:
                     raise ValueError(
-                        f'Column {col} for product {row[column_id]} is null. To allow nulls update config.py')
+                        f'Column {col} for product {row[column_id]} is null. To allow nulls update app.toml')
     return categories
 
 

@@ -25,34 +25,31 @@ https://cloud.google.com/vertex-ai/docs/vector-search/overview
 import logging
 import unittest
 import nearest_neighbors
-from google.cloud.ml.applied.utils import utils
+from google.cloud.ml.applied.config import Config
 
 logging.basicConfig(level=logging.INFO)
 
-test_category = utils.str_value('test', 'category')
-
+test_category = Config.value('test', 'category')
+num_neighbors = 3
+emb1 = [0] * 1408
+emb2 = [0] * 1408
+embeds = [emb1, emb2]
 
 class NearestNeighborsTest(unittest.TestCase):
 
     def test_nn_no_filter(self):
-        emb1 = [0] * 1408
-        emb2 = [0] * 1408
-        embeds = [emb1, emb2]
-        num_neigbhors = 3
-        res = nearest_neighbors.get_nn(embeds, [], num_neigbhors)
+        res = nearest_neighbors.get_nn(embeds=embeds,
+                                       num_neighbors=num_neighbors)
         logging.info(res)
-        self.assertEqual(len(res), len(embeds) * num_neigbhors)
+        self.assertEqual(len(res), len(embeds) * num_neighbors)
         self.assertEqual(res[0]._fields, ('id', 'distance'))
 
     def test_nn_with_filter(self):
-        emb1 = [0] * 1408
-        emb2 = [0] * 1408
-        embeds = [emb1, emb2]
-        num_neigbhors = 3
-        res = nearest_neighbors.get_nn(embeds, test_category,
-                                       num_neigbhors)
+        res = nearest_neighbors.get_nn(embeds=embeds,
+                                       filters=[test_category],
+                                       num_neighbors=num_neighbors)
         logging.info(res)
-        self.assertEqual(len(res), len(embeds) * num_neigbhors)
+        self.assertEqual(len(res), len(embeds) * num_neighbors)
         self.assertEqual(res[0]._fields, ('id', 'distance'))
 
 

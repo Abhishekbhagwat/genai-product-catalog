@@ -1,0 +1,56 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[default]
+bucket_name = "rdm-demo-images2"
+allow_trailing_spaces = true
+allow_trailing_nulls = true
+
+[project]
+id = "solutions-2023-mar-107"
+location = "us-central1"
+endpoint = "us-central1-aiplatform.googleapis.com"
+
+[gcs]
+bucket_name = "rdm-demo-images2"
+
+[models]
+gemini = "gemini-pro-vision"
+llm = "text-bison"
+
+[vectors]
+index_path = "projects/411826505131/locations/us-central1/indexes/924016377843417088"
+endpoint_id = "4968248843222122496"
+deployed_index = "flipkart_streaming_with_filters"
+number_of_neighbors = 7
+
+[big_query]
+prefix = "solutions-2023-mar-107.flipkart"
+product_table = "solutions-2023-mar-107.flipkart.preprocessed_data"
+product_id_column = "id"
+product_category_column_list = ["c0_name", "c1_name", "c2_name", "c3_name"]
+product_attributes_column = "attributes"
+product_description_column = "description"
+product_category_allow_trailing_nulls = true
+
+[category]
+filter = ["L0", "L1", "L2", "L3"]
+depth = 4
+
+[test]
+product_id = "dbdac18a8ee5a8a48238b9685c96e90a"
+category = "Watches"
+description = "Timewel 1100-N1949_S Analog Watch - For Women - Buy Timewel 1100-N1949_S Analog Watch - For Women 1100-N1949_S Online at Rs.855 in India Only at Flipkart.com. - Great Discounts, Only Genuine Products, 30 Day Replacement Guarantee, Free Shipping. Cash On Delivery!"
+gcs_image = "gs://genai-product-catalog/flipkart_20k_oct26/dbdac18a8ee5a8a48238b9685c96e90a_0.jpg"
+image_url = "http://img5a.flixcart.com/image/watch/t/p/r/1100-n1949-s-timewel-1100x1360-imaefy3pr4cwvduj.jpeg"

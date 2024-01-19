@@ -3,12 +3,14 @@ load("@python_deps//:requirements.bzl", "requirement")
 
 PY_DEPS = [
     requirement("google-cloud-aiplatform"),
+    "//google/cloud/ml/applied",
     "//google/cloud/ml/applied/utils",
 ]
 
 py_library(
     name = "knn",
     srcs = [
+        "__init__.py",
         "nearest_neighbors.py",
     ],
     imports = ["."],
@@ -19,6 +21,7 @@ py_library(
 
 py_test(
     name = "nearest_neighbors_test",
+    size = "small",
     srcs = ["nearest_neighbors_test.py"],
     imports = ["."],
     deps = [":knn"] + PY_DEPS,

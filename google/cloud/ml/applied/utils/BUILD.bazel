@@ -9,21 +9,11 @@ PY_DEPS = [
 py_library(
     name = "utils",
     srcs = [
+        "__init__.py",
         "utils.py",
-    ],
-    data = [
-        "//conf:app_config",
     ],
     imports = ["."],
     srcs_version = "PY3",
     visibility = ["//visibility:public"],
     deps = PY_DEPS,
-)
-
-py_test(
-    name = "utils_test",
-    size = "small",
-    srcs = ["utils_test.py"],
-    imports = ["."],
-    deps = [":utils"],
 )

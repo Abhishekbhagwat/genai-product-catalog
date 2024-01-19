@@ -1,15 +1,14 @@
 load("@rules_python//python:pip.bzl", "compile_pip_requirements")
 
-filegroup(
-    name = "app_config",
-    srcs = [
-        "app.ini",
-    ],
-    visibility = ["//:__subpackages__"],
+exports_files(
+    ["copy_file_groups.bzl"],
+    ["//:__subpackages__"],
 )
 
-compile_pip_requirements(
-    name = "requirements",
-    srcs = ["requirements.in"],
-    requirements_txt = "requirements.txt",
+filegroup(
+    name = "config",
+    srcs = [
+        "app.toml",
+    ],
+    visibility = ["//:__subpackages__"],
 )

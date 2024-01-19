@@ -12,9 +12,3 @@ filegroup(
     ],
     visibility = ["//:__subpackages__"],
 )
-
-compile_pip_requirements(
-    name = "requirements",
-    srcs = ["requirements.in"],
-    requirements_txt = "requirements.txt",
-)

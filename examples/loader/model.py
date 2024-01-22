@@ -71,7 +71,6 @@ class RoundingRule:
 
 class Numeric:
     """ Numeric is a decimal value split to ensure consistent multi-platform storage """
-
     def __init__(self, whole: int, decimal: int):
         self.whole = whole
         self.decimal = decimal
@@ -150,6 +149,7 @@ class ProductHeader:
                  long_description: str,
                  images: List[Image],
                  attribute_values: List[ProductHeaderAttributeValue]):
+
         if isinstance(long_description, str):
             long_description = re.sub("[\t|\r|\n|\\s+]", " ", long_description)
             long_description = long_description.replace('\u2022', '')
@@ -178,7 +178,7 @@ class Product:
         self.business_keys.append(BusinessKey(key, value))
 
 
-def parse_category(value: str, brand_info: List[str]) -> Category:
+def parse_category(value: str, brand_info: List[str]) -> Category | None:
     if isinstance(value, str):
         clean_value = value.replace("[\"", "").replace("\"]", "")
         clean_values = [x.strip() for x in clean_value.split(" >> ")]
@@ -195,6 +195,7 @@ def parse_category(value: str, brand_info: List[str]) -> Category:
                 if i >= 3:
                     break
         return parent
+
     return None
 
 
@@ -239,7 +240,7 @@ def get_image_uri(name: str) -> str:
 
 
 def file_exists(name: str):
-    path = '/Users/rmcguinness/tmp' + name
+    path = '/tmp' + name
     return os.path.isfile(path)
 
 

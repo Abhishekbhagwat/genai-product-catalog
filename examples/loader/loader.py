@@ -17,7 +17,7 @@ import concurrent.futures
 import pandas as pd
 
 import model
-from cmd_fetch import FetchImageCommand
+from loader.commands.cmd_fetch import FetchImageCommand
 
 
 def read_file():
@@ -29,7 +29,7 @@ def read_file():
     :return:
     """
 
-    imageFetcher = FetchImageCommand()
+    image_fetcher = FetchImageCommand()
 
     data = pd.read_csv(
         'third_party/flipkart/ecommerce-sample.csv',
@@ -43,8 +43,8 @@ def read_file():
 
     j = 0
 
-    allFutures = []
-    totalImages = 0
+    all_futures = []
+    total_images = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         for i, row in data.iterrows():
             if j > 10:
@@ -54,18 +54,18 @@ def read_file():
             if p is not None:
                 for h in p.headers:
                     print(h.name)
-                    totalImages += len(h.images)
-                    allFutures.extend({executor.submit(imageFetcher.fetch_image, i): i for i in h.images})
+                    total_images += len(h.images)
+                    all_futures.extend({executor.submit(image_fetcher.fetch_image, i): i for i in h.images})
     f.close()
 
-    for future in concurrent.futures.as_completed(allFutures):
+    for future in concurrent.futures.as_completed(all_futures):
         try:
             r = future.result()
             print(r)
         except Exception as e:
             print(e)
 
-    print("Total Images: %d" % totalImages)
+    print("Total Images: %d" % total_images)
 
 
 if __name__ == '__main__':

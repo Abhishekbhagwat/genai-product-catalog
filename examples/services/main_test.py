@@ -19,12 +19,13 @@ Make sure to update the ENDPOINT variable as appropriate before running.
 """
 import logging;
 
-logging.basicConfig(level=logging.INFO)
 import requests
 import unittest
 import config
 from google.auth.transport.requests import Request
 from google.oauth2 import id_token
+
+logging.basicConfig(level=logging.INFO)
 
 # ENDPOINT = 'http://localhost:8080/genai/v1/' # UPDATE AS NEEDED
 # ENDPOINT = 'http://127.0.0.1:8000/genai/v1/' # UPDATE AS NEEDED

@@ -14,16 +14,14 @@ PY_DEPS = [
 ]
 
 py_library(
-    name = "loader-lib",
+    name = "loader_library",
     srcs = [
-        "cmd_fetch.py",
+        "__init__.py",
+        "chain.py",
         "model.py",
+        "//examples/loader/commands",
     ],
-    data = [
-        "//conf:config",
-        "//third_party/flipkart:flipkart_data",
-    ],
-    imports = ["."],
+    imports = [".."],
     srcs_version = "PY3",
     visibility = ["//visibility:public"],
     deps = PY_DEPS,
@@ -35,11 +33,23 @@ py_binary(
         "loader.py",
     ],
     data = [
-        "model.py",
+        "//conf:config",
         "//third_party/flipkart:flipkart_data",
     ],
-    imports = ["."],
+    imports = [".."],
     deps = [
-        ":loader-lib",
+        ":loader_library",
+    ] + PY_DEPS,
+)
+
+py_test(
+    name = "chain_test",
+    size = "small",
+    srcs = [
+        "chain_test.py",
+    ],
+    imports = [".."],
+    deps = [
+        ":loader_library",
     ] + PY_DEPS,
 )

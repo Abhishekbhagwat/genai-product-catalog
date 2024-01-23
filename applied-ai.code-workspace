@@ -1,0 +1,30 @@
+{
+    "folders": [
+        {
+            "path": ".",
+            "name": "Project Root"
+        },
+        {
+            "path": "conf"
+        },
+        {
+            "path": "docs"
+        },
+        {
+            "path": "examples"
+        },
+        {
+            "path": "google"
+        },
+        {
+            "path": "third_party"
+        }
+    ],
+    "settings": {
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python3",
+        "python.envFile": "${workspaceFolder}/.env",
+        "terminal.integrated.env.osx": {"PYTHONPATH": ".:examples"},
+        "terminal.integrated.env.linux": {"PYTHONPATH": ".:examples"},
+        "terminal.integrated.env.windows": {"PYTHONPATH": ".:examples"}
+    }
+}

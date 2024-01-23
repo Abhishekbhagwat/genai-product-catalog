@@ -1,4 +1,5 @@
 # Scipy and Numpy for examples
+pip-tools
 requests
 scipy
 numpy
@@ -8,6 +9,8 @@ en_core_web_sm@https://github.com/explosion/spacy-models/releases/download/en_co
 spacy
 spacy-cleaner
 jsonpickle
+
+jupyterlab
 
 # Required Google and Protobuf APIs
 google-api-python-client

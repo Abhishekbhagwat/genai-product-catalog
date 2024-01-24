@@ -18,7 +18,7 @@ respective to your terminal preferences.
 
 ```shell
 # Sets the default Python SDK for Google Cloud
-export CLOUDSDK_PYTHON=/Library/Frameworks/Python.framework/Versions/3.11/bin/python3
+export CLOUDSDK_PYTHON=.venv
 
 # These lines SHOULD HAVE been added by the Google Cloud CLI Setup:
 # The next line updates PATH for the Google Cloud SDK.

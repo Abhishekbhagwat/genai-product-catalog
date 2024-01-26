@@ -1,7 +1,9 @@
+import os
 import tomllib
 
 DATA: dict = None
-with open("conf/app.toml", "rb") as f:
+configuration_file = os.environ.get("APPLIED_AI_CONF", "conf/app.toml")
+with open(configuration_file, "rb") as f:
     DATA = tomllib.load(f)
 
 class Config:

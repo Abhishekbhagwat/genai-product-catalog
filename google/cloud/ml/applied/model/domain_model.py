@@ -61,8 +61,17 @@ def parse_project_attributes_from_dict(obj: dict) -> ProductAttributes:
 
     for k in obj.keys():
         out.product_attributes.append({'attribute_name': k, 'attribute_value': obj[k]})
-
     return out
+
+def parse_list_to_dict(obj: list) -> dict:
+    prod_dict = {}
+
+    for i in obj:
+        key = i['name']
+        value = i['value']
+        prod_dict[key] = value
+        
+    return prod_dict
 
 def attribute_values_to_dict(values: list[AttributeValue]) -> dict[str, str]:
     out: dict[str, str] = {}

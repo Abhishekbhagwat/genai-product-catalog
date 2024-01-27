@@ -2,7 +2,7 @@ import os
 import tomllib
 
 DATA: dict = None
-configuration_file = os.environ.get("APPLIED_AI_CONF", "conf/app.toml")
+configuration_file = os.environ.get("APPLIED_AI_CONF", "/usr/local/google/home/abhishekbhgwt/applied-ai/conf/app.toml")
 with open(configuration_file, "rb") as f:
     DATA = tomllib.load(f)
 

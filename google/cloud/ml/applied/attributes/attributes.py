@@ -235,7 +235,7 @@ def retrieve_and_generate_attributes(
     if filters and not candidates:
         return {'error': 'ERROR: no existing products match that category'}
     try:
-        return generate_attributes(desc, candidates)
+        return m.ProductAttributes(product_attributes=generate_attributes(desc, candidates))
     except ValueError as e:
         logging.error(e)
         logging.error('Falling back to greedy approach')

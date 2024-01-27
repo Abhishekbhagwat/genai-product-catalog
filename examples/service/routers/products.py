@@ -40,9 +40,7 @@ def suggest_attributes(
         print(f"ERROR: Product Retrieval & Generation Error: -> {e}")
         raise HTTPException(status_code=500, detail=str(e))
     else:
-        return ProductAttributes(
-            product_attributes = response
-        )
+        return response
 
 
 @router.post('/api/v1/genai/products/marketing')

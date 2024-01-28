@@ -1,16 +1,19 @@
-import configparser
 from google.cloud import bigquery
+from google.cloud.exceptions import NotFound
 
-class VerifyAndConnectToBigQueryCommand:
-    project_id: str = None
+from ..chain_new import Command, Context
 
-    def __init__(self):
-        config = configparser.ConfigParser()
-        config.read('conf/app.toml')
-        VerifyAndConnectToBigQueryCommand.project_id = config['project']['id']
+from config_utils import ConfigLoader
 
-    @staticmethod
-    def connect_to_bigquery() -> bool:
-        client = bigquery.Client(project=VerifyAndConnectToBigQueryCommand.project_id)
-        print(f"Connected to BigQuery project: {client.project}")
-        return True
+class VerifyAndConnectToBigQueryCommand(Command):
+    def is_executable(self, context: Context) -> bool:
+        # You might add additional checks based on your configuration
+        return True 
+
+    def execute(self, context: Context) -> None:
+        config_loader = ConfigLoader()
+        config = config_loader.get_config()
+
+        project_id = config['gcp']['project_id']
+        client = bigquery.Client(project=project_id) 
+        context.add_value('bigquery_client', client)

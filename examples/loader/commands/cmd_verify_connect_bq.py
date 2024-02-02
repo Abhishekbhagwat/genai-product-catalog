@@ -15,5 +15,9 @@ class VerifyAndConnectToBigQueryCommand(Command):
         config = config_loader.get_config()
 
         project_id = config['gcp']['project_id']
-        client = bigquery.Client(project=project_id) 
-        context.add_value('bigquery_client', client)
+        try:
+            client = bigquery.Client(project=project_id)
+        except Exception as e:
+            raise Exception(f'Unable to create BigQuery client: {str(e)}')
+        else:            
+            context.add_value('bigquery_client', client)

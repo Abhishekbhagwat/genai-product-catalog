@@ -66,7 +66,8 @@ def product_to_json(product):
     """
     # Setting unpicklable=False generates a JSON representation of the object
     # that can be easily converted back to a dictionary, but not necessarily back to the original object.
-    print(product.headers[0].name)
+    json_str = jsonpickle.encode(product, unpicklable=False)
+    print(json_str)
     return jsonpickle.encode(product, unpicklable=False)
 
 
@@ -84,7 +85,10 @@ class ParseRow(beam.DoFn):
             yield 'failure', str(e)
 
 class DownloadImage(beam.DoFn):
-    def process(self, element, bucket_name):
+    def __init__(self, bucket_name):
+        self.bucket_name = bucket_name
+
+    def process(self, element):
         # Create the storage client within the process method
         client = storage.Client()
         try:
@@ -92,14 +96,15 @@ class DownloadImage(beam.DoFn):
             print(f"Processing product: {element.headers[0].name}")
             image_url = product.headers[0].images[0].origin_url
             print(image_url)
-            print(product.headers[0].images)
+            print(product.business_keys[0].name)
+            print(product.business_keys[0].value)
             response = requests.get(image_url)
             if response.status_code == 200:
-                blob_name = f'images/{product.pid}.jpg'
-                bucket = client.bucket(bucket_name)
+                blob_name = f'images/{product.business_keys[0].value}.jpg'
+                bucket = client.bucket(self.bucket_name)
                 blob = bucket.blob(blob_name)
                 blob.upload_from_string(response.content, content_type='image/jpeg')
-                gcs_url = f'gs://{bucket_name}/{blob_name}'
+                gcs_url = f'gs://{self.bucket_name}/{blob_name}'
                 product.headers[0].images[0].url = gcs_url
                 print(product.headers[0].images[0].url)
                 yield 'success', product
@@ -111,15 +116,21 @@ class DownloadImage(beam.DoFn):
 
 
 class CallEmbeddingAPI(beam.DoFn):
-    def process(self, element, project_id, location):
+    def __init__(self, project_id, location):
+        self.project_id = project_id
+        self.location = location
+
+    def process(self, element):
         print(f"Embedding product: {element.headers[0].name}")
         try:
             product = element[1]  # Assuming element is a tuple (status, product)
             image_path = product.headers[0].images[0].url
             contextual_text = product.headers[0].name + product.headers[0].long_description + product.headers[0].brand
+            print(image_path)
+            print(contextual_text)
             embeddings = get_multimodal_embeddings(
-                project_id=project_id,
-                location=location,
+                project_id=self.project_id,
+                location=self.location,
                 image_path=image_path,
                 contextual_text=contextual_text
             )
@@ -161,29 +172,24 @@ def run():
 
         success_data, failed_parse = parsed_data
         
-        print(parsed_data)
-
         # Process successfully parsed data further
         processed_data = (
             success_data
             | 'Extract Success Data' >> beam.Map(lambda x: x[1])  # Extract the product object from the tuple
-            | 'Download Image to GCS' >> beam.ParDo(DownloadImage(), bucket_name=bucket_name)
+            | 'Download Image to GCS' >> beam.ParDo(DownloadImage(bucket_name=bucket_name))
             | 'Partition by Download Success' >> beam.Partition(partition_fn, 2)
         )
 
-        print(processed_data)
-
         success_downloads, failed_downloads = processed_data
-        failed_downloads | 'Print Failed Data' >> beam.Map(print)
-
-
+        
         # # Call Embedding API on successfully downloaded images
         embedding_results = (
             success_downloads
             | 'Extract Success Downloads' >> beam.Map(lambda x: x[1])  # Extract the product object from the tuple
-            | 'Call Embedding API' >> beam.ParDo(CallEmbeddingAPI(), project_id='customermod-genai-sa', location='us-central1')
+            | 'Call Embedding API' >> beam.ParDo(CallEmbeddingAPI(project_id='customermod-genai-sa', location='us-central1'))
+            | 'print' >> beam.Map(print)
             | 'Convert to JSON' >> beam.Map(product_to_json)
-            | 'Write to GCS' >> WriteToText(output_file_path, file_name_suffix='.json', shard_name_template='')
+            | 'Write to GCS' >> WriteToText(output_file_path, file_name_suffix='.jsonl', shard_name_template='')
         )
 
         # Optionally, write failed records to some sink for inspection

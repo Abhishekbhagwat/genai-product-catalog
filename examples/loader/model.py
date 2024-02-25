@@ -173,6 +173,8 @@ class Product:
         self.categories: List[Category] = [category]
         self.business_keys: List[BusinessKey] = []
         self.headers.append(header)
+        self.image_embedding = List = None
+        self.text_embedding = List = None
 
     def add_business_key(self, key: str, value: str):
         self.business_keys.append(BusinessKey(key, value))

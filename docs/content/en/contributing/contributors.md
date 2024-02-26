@@ -29,5 +29,7 @@ contributions to this project and their work is sincerly appreciated.
 
 | Name              | Start Date | Bio                                                   |
 |-------------------|------------|-------------------------------------------------------|
-| Ryan McGuinness   | 06/01/2022 | [Linked In](https://www.linkedin.com/in/rmcguinness/) |
-| Damodar Panigrahi | 10/01/2022 | [Linked In](https://www.linkedin.com/in/damodarp/)    |
+| Abhishek Bhagwat  | 10/01/2022 | [Linked In](#thank-you)                               |
+| Michael Chi       | 02/20/2024 |                                                       |
+| Ryan McGuinness   | 12/01/2023 | [Linked In](https://www.linkedin.com/in/rmcguinness/) |
+

@@ -39,7 +39,7 @@ py_binary(
     srcs = ["doc-gen.py"],
     main = "doc-gen.py",
     deps = [
-        "//google",
+        "//google/cloud/ml/applied",
         requirement("pydoc-markdown"),
     ],
 )

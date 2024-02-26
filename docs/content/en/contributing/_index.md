@@ -64,12 +64,13 @@ L --> C
 
 The Google Retail Cloud project is divided into the following directory structure:
 
-- API (api) - Is the protocol buffer definitions defining the model and service
-  entry points for accessing data. These definitions are used to generate the data model and client consumption libraries.
-- Build (build) - Internal scripts to aid the CI/CD process.
-- Documentation (docs) - A Hugo site used for publishing HTML static content.
-- Tools (tools) - Utility classes to aid in the development and contribution to the project.
-- Third Party (third_party) - Third party software or files accompanied by their license files which are used by the project.
+- conf - Configuration files
+- docs - The documentation site
+- examples - Examples on how to use the python modules
+- google - Is the root library for all google libraries
+- third-party - Is all third party data and licenses.
 
 
 ## Licensing
+
+This project is licensed under the Apache 2.0 license. Please see the LICENSE file in the root of the project.

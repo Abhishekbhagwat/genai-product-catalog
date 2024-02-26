@@ -123,11 +123,9 @@ class CallEmbeddingAPI(beam.DoFn):
     def process(self, element):
         print(f"Embedding product: {element.headers[0].name}")
         try:
-            product = element[1]  # Assuming element is a tuple (status, product)
+            product = element  # Assuming element is a tuple (status, product)
             image_path = product.headers[0].images[0].url
             contextual_text = product.headers[0].name + product.headers[0].long_description + product.headers[0].brand
-            print(image_path)
-            print(contextual_text)
             embeddings = get_multimodal_embeddings(
                 project_id=self.project_id,
                 location=self.location,
@@ -136,9 +134,9 @@ class CallEmbeddingAPI(beam.DoFn):
             )
             # Assuming you want to store or do something with the embeddings here
             # For simplicity, just printing the embeddings
-            print(f"Embeddings for {product.product_name} obtained.")
             product.image_embedding = embeddings.image_embedding
             product.text_embedding = embeddings.text_embedding
+            print("embedding finished")
             
             yield 'success', product
         except Exception as e:
@@ -187,7 +185,6 @@ def run():
             success_downloads
             | 'Extract Success Downloads' >> beam.Map(lambda x: x[1])  # Extract the product object from the tuple
             | 'Call Embedding API' >> beam.ParDo(CallEmbeddingAPI(project_id='customermod-genai-sa', location='us-central1'))
-            | 'print' >> beam.Map(print)
             | 'Convert to JSON' >> beam.Map(product_to_json)
             | 'Write to GCS' >> WriteToText(output_file_path, file_name_suffix='.jsonl', shard_name_template='')
         )

@@ -16,10 +16,26 @@ from io import BytesIO
 import os
 import sys
 
-try:
-    from .model import parse_row, FILE_COLUMNS  # Ensure this is the path to your data model module
-except Exception as e:
-    from model import parse_row, FILE_COLUMNS
+from models.model import parse_row, FILE_COLUMNS
+# try:
+#     from .model import parse_row, FILE_COLUMNS
+#     print("->1")
+# except Exception as e:
+#     try:
+#         from model import parse_row, FILE_COLUMNS
+#         print("->2")
+#     except Exception as e:
+#         try:
+#             from .models.model import parse_row, FILE_COLUMNS
+#             print("->3")
+#         except Exception as e:
+#             try:
+#                 from models.model import parse_row, FILE_COLUMNS
+#                 print("->4")
+#             except Exception as e:
+#                 from .models.model import parse_row, FILE_COLUMNS
+#                 print("->5")
+
 
 from typing import Optional
 import argparse
@@ -29,7 +45,6 @@ from vertexai.vision_models import (
     MultiModalEmbeddingModel,
     MultiModalEmbeddingResponse,
 )
-
 
 def get_multimodal_embeddings(
     image_path: str,
@@ -183,20 +198,15 @@ class WriteToGCS(beam.DoFn):
         self.file_name = file_name
 
     def process(self, element):
+        print(f"[WriteToGCS]:{self.bucket} | {self.file_name}")
         client = storage.Client(self.project_id)
         bucket = client.get_bucket(self.bucket)
         blob = bucket.blob(self.file_name)
         blob.upload_from_string(f"{element}")
 
 def run(argv=None, save_main_session=True):
-    ## ===
     """Main entry point; defines and runs the wordcount pipeline."""
     parser = argparse.ArgumentParser()
-    # parser.add_argument(
-    #     '--csv_path',
-    #     dest='csv_path',
-    #     required=True,
-    #     help='CSV file GCS url')
 
     parser.add_argument(
         "--input_subscription",
@@ -209,38 +219,14 @@ def run(argv=None, save_main_session=True):
         dest='bucket',
         required=True,
         help='GCS Bucket name for storing product images and information.')
-    print(f"argv={argv}")
     known_args, pipeline_args = parser.parse_known_args(argv)
-    # print(pipeline_args[pipeline_args.index("--project") + 1])
     # We use the save_main_session option because one or more DoFn's in this
     # workflow rely on global context (e.g., a module imported at module level).
-    pipeline_options = PipelineOptions(pipeline_args, save_main_session=True, streaming=True)
-    # pipeline_options.view_as(SetupOptions).save_main_session = save_main_session
-    # print("===> 1")
-    # print(pipeline_options.view_as(PipelineOptions))
-    # print("===> 2")
-    # print(pipeline_args)
-    # print("===> 3")
-    # print(pipeline_options.view_as)
-    # return
-    ## ===
-
-    # pipeline_options = PipelineOptions(
-    #     # Your pipeline options
-    #     # runner='DirectRunner'
-    #     runner='DataflowRunner'
-    # )
+    pipeline_options = PipelineOptions(pipeline_args, save_main_session=True, streaming=True, setup_file="/template/setup.py")
 
     subscription_id = known_args.subscription
-    # csv_file_path = known_args.csv_path # '/usr/local/google/home/kalschi/solutions/applied-ai/third_party/flipkart/ecommerce-sample_small.csv'
-    bucket_name = known_args.bucket # "kalschi-etl-test" # 'pc-dataflow-test'
-    output_file_path = f"jsonl/rdm-{datetime.datetime.now().isoformat(sep='_')}.jsonl" # '/usr/local/google/home/kalschi/solutions/applied-ai/third_party/flipkart/output' #f"gs://{known_args.bucket}/jsonl"# 
-    print(f"""=========
-    bucket_name={bucket_name}
-    subscription_id={subscription_id}
-    output_file_path={output_file_path}
-    ===========""")
-    # TODO:
+    bucket_name = known_args.bucket
+
     project_id = ""
     if "--project" in pipeline_args:
         project_id = pipeline_args[pipeline_args.index("--project") + 1]
@@ -252,13 +238,7 @@ def run(argv=None, save_main_session=True):
             project_id = items[0].split("=")[1]
     print(f"*** project_id={project_id}")
     with beam.Pipeline(options=pipeline_options) as p:
-        # raw_data = (
-        #     p
-        #     | 'Read CSV File' >> ReadFromText(csv_file_path, skip_header_lines=1)
-        #     | 'Parse CSV Lines' >> beam.Map(lambda x: dict(zip(FILE_COLUMNS.keys(), x.split(','))))
-        # )
         print(f"** Starting pipeline...{subscription_id}")
-        # Each CSV Message MUST have a header row
         # raw_data = (
         #     p
         #     | 'Read Pub/Sub' >> beam.io.ReadFromPubSub(subscription=subscription_id).with_output_types(bytes)
@@ -299,8 +279,7 @@ def run(argv=None, save_main_session=True):
             | 'Call Embedding API' >> beam.ParDo(CallEmbeddingAPI(project_id=project_id, location='us-central1'))
             | 'Convert to JSON' >> beam.Map(product_to_json)
             # | 'Aggregate to List' >> beam.CombineGlobally(AggregateToList())
-            | 'Write to GCS' >> beam.ParDo(WriteToGCS(project_id=project_id, bucket=bucket_name, file_name=output_file_path))
-            # | 'Write to GCS' >> WriteToText(f"gs://{known_args.bucket}/jsonl/file", file_name_suffix='.jsonl', shard_name_template='')
+            # | 'Write to GCS' >> beam.ParDo(WriteToGCS(project_id=project_id, bucket=bucket_name, file_name=output_file_path))
         )
 
         # Optionally, write failed records to some sink for inspection

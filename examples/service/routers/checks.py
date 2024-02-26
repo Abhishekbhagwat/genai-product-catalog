@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from examples.services.models.checks_model import (
+from models.checks_model import (
     Liveliness,
     Status
 )

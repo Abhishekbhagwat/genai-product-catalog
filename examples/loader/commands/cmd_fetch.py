@@ -9,7 +9,7 @@ class FetchImageCommand:
     def __init__(self):
         config = configparser.ConfigParser()
         config.read('conf/app.ini')
-        FetchImageCommand.bucket_name = config['DEFAULT']['bucket_name']
+        FetchImageCommand.bucket_name = "rdm-demo-images2"
 
     @staticmethod
     def fetch_image(image: Image) -> bool:

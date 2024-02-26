@@ -97,12 +97,15 @@ def image_to_attributes(req: m.ImageRequest) -> m.ProductAttributes:
     # This produces multiple models, NOT USEFUL for API calls.
     # had to create a parser to return consistent values
     attributes_json = json.loads(res.strip())
-
+    
     if "product_attributes" not in attributes_json:
         print('parsing')
-        attributes_json = m.parse_project_attributes_from_dict(attributes_json)
+        response = m.parse_project_attributes_from_dict(attributes_json)
+    else:
+        response = m.parse_list_to_dict(attributes_json.get('product_attributes'))
+        response = m.parse_project_attributes_from_dict(response)
 
-    return attributes_json
+    return response
 
 
 def image_to_product_description(image: str) -> m.TextValue:

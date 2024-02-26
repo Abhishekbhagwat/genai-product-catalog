@@ -17,7 +17,7 @@ import concurrent.futures
 import pandas as pd
 
 import model
-from loader.commands.cmd_fetch import FetchImageCommand
+from commands.cmd_fetch import FetchImageCommand
 
 
 def read_file():
@@ -32,7 +32,7 @@ def read_file():
     image_fetcher = FetchImageCommand()
 
     data = pd.read_csv(
-        'third_party/flipkart/ecommerce-sample.csv',
+        '/usr/local/google/home/abhishekbhgwt/applied-ai/third_party/flipkart/ecommerce-sample.csv',
         dtype=model.FILE_COLUMNS)
 
     data = data.drop_duplicates(subset=['product_name'])

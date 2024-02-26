@@ -17,9 +17,14 @@ def generate_attributes(
     """
     Extracts attributes detected from product's image.
     """
-    return image_to_text.image_to_attributes(image_request)
-
-
+    try:
+        response = image_to_text.image_to_attributes(image_request)
+    except Exception as e:
+        print(f"ERROR: Image Attribute Generation Error: -> {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    else:
+        return response
+    
 @router.post('/api/v1/genai/images/descriptions')
 def generate_description(
     image_request: ImageRequest
@@ -27,4 +32,10 @@ def generate_description(
     """
     Generates a product description from an image of product.
     """
-    return image_to_text.image_to_product_description(image_request.image)
+    try:
+        response = image_to_text.image_to_product_description(image_request.image)
+    except Exception as e:
+        print(f"ERROR: Image Description Generation Error: -> {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    else:
+        return response

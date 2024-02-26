@@ -86,3 +86,59 @@ RECOMMENDED for large data loading.
 * LocalEmbeddingStorageCommand
 * BQEmbeddingLoaderCommand
 
+# Create Dataflow Pipeline
+
+* Build Container Image
+
+```shell
+export PROJECT=customermod-genai-sa
+export TEMPLATE_IMAGE="gcr.io/$PROJECT/dataflow/streaming-beam:latest"
+gcloud builds submit --project $PROJECT --tag "$TEMPLATE_IMAGE" .
+```
+
+```shell
+export BUCKET=kalschi_etl_2
+export TEMPLATE_PATH="gs://$BUCKET/dataflow/templates/streaming-beam.json"
+
+# Build the Flex Template.
+gcloud dataflow flex-template build $TEMPLATE_PATH \
+  --image "$TEMPLATE_IMAGE" \
+  --sdk-language "PYTHON" \
+  --metadata-file "metadata.json"
+```
+
+* Run
+
+```shell
+
+
+# Run the Flex Template.
+# python -m dataflow_loader \
+#     --region us-central1 \
+#     --runner DirectRunner \
+#     --project customermod-genai-sa \
+#     --input_subscription="projects/customermod-genai-sa/subscriptions/rdm_topic-sub" \
+#     --bucket="kalschi_etl_2" \
+#     --temp_location gs://kalschi-etl-test/tmp/ 2>&1 | tee log.txt
+
+# python -m dataflow_loader \
+#     --streaming \
+#     --setup_file ./setup.py \
+#     --region us-central1 \
+#     --runner DataflowRunner \
+#     --project customermod-genai-sa \
+#     --input_subscription="projects/customermod-genai-sa/subscriptions/rdm_topic-sub" \
+#     --bucket="kalschi_etl_2" \
+#     --temp_location gs://kalschi-etl-test/tmp/ 2>&1 | tee log.txt
+
+export REGION="us-central1"
+
+gcloud dataflow flex-template run "streaming-beam-kalschi-`date +%Y%m%d-%H%M%S`" \
+    --template-file-gcs-location "$TEMPLATE_PATH" \
+    --temp-location gs://kalschi-etl-test/tmp/ \
+    --project $PROJECT \
+    --parameters input_subscription="projects/customermod-genai-sa/subscriptions/rdm_topic-sub" \
+    --parameters bucket="kalschi_etl_2" \
+    --enable-streaming-engine \
+    --region "$REGION"
+```

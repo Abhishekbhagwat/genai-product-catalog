@@ -16,7 +16,7 @@ import math
 import os.path
 import random
 import re
-from typing import List
+from typing import List, Optional, Union
 
 import pandas as pd
 import spacy
@@ -180,7 +180,7 @@ class Product:
         self.business_keys.append(BusinessKey(key, value))
 
 
-def parse_category(value: str, brand_info: List[str]) -> Category | None:
+def parse_category(value: str, brand_info: List[str]) -> Union[Category, None]: # Category | None:
     if isinstance(value, str):
         clean_value = value.replace("[\"", "").replace("\"]", "")
         clean_values = [x.strip() for x in clean_value.split(" >> ")]

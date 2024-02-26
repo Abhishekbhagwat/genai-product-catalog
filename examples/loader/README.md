@@ -121,6 +121,16 @@ gcloud dataflow flex-template build $TEMPLATE_PATH \
 #     --bucket="kalschi_etl_2" \
 #     --temp_location gs://kalschi-etl-test/tmp/ 2>&1 | tee log.txt
 
+# python -m dataflow_loader \
+#     --streaming \
+#     --setup_file ./setup.py \
+#     --region us-central1 \
+#     --runner DataflowRunner \
+#     --project customermod-genai-sa \
+#     --input_subscription="projects/customermod-genai-sa/subscriptions/rdm_topic-sub" \
+#     --bucket="kalschi_etl_2" \
+#     --temp_location gs://kalschi-etl-test/tmp/ 2>&1 | tee log.txt
+
 export REGION="us-central1"
 
 gcloud dataflow flex-template run "streaming-beam-kalschi-`date +%Y%m%d-%H%M%S`" \

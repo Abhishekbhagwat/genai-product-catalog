@@ -29,8 +29,16 @@ RUN apt-get update \
     # Download the requirements to speed up launching the Dataflow job.
     && pip download --no-cache-dir --dest /tmp/dataflow-requirements-cache -r $FLEX_TEMPLATE_PYTHON_REQUIREMENTS_FILE
 
-COPY ./model.py /template/
+COPY ./model.py /template/models/
 COPY ./dataflow_loader.py /template/
+COPY ./__init__.py /template/
+COPY ./__init__.py /template/models/
+COPY ./setup.py /template/
+# COPY ./models/model.py /template/models/
+# COPY ./dataflow_loader.py /template/
+# COPY ./__init__.py /template/
+# COPY ./models/__init__.py /template/models/
+# COPY ./setup.py /template/
 
 # Since we already downloaded all the dependencies, there's no need to rebuild everything.
 ENV PIP_NO_DEPS=True

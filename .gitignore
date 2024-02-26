@@ -8,3 +8,8 @@ bazel*
 user.bazelrc
 
 __pycache__/
+
+node_modules/
+.terraform/
+terraform.tfstate
+variables.tfvars

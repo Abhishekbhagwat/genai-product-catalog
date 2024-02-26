@@ -1,24 +1,27 @@
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.io import ReadFromText, WriteToText
+from apache_beam.options.pipeline_options import SetupOptions
+from apache_beam.io import ReadFromText 
+from apache_beam.io.textio import WriteToText
 from apache_beam.io.gcp.gcsio import GcsIO
 import jsonpickle
 import pandas as pd
+import json
 
 from google.cloud import storage
 import requests
 from io import BytesIO
 
 from model import parse_row, FILE_COLUMNS  # Ensure this is the path to your data model module
-
 from typing import Optional
-
+import argparse
 import vertexai
 from vertexai.vision_models import (
     Image,
     MultiModalEmbeddingModel,
     MultiModalEmbeddingResponse,
 )
+
 
 def get_multimodal_embeddings(
     image_path: str,
@@ -40,7 +43,8 @@ def get_multimodal_embeddings(
 
     vertexai.init(project=project_id, location=location)
 
-    model = MultiModalEmbeddingModel.from_pretrained("multimodalembedding")
+    model = MultiModalEmbeddingModel.from_pretrained("multimodalembedding@001")
+
     image = Image.load_from_file(image_path)
 
     embeddings = model.get_embeddings(
@@ -48,8 +52,8 @@ def get_multimodal_embeddings(
         contextual_text=contextual_text,
         dimension=dimension,
     )
-    print(f"Image Embedding: {embeddings.image_embedding}")
-    print(f"Text Embedding: {embeddings.text_embedding}")
+    print(f"Image Embedding: {embeddings.image_embedding[0:10]}")
+    print(f"Text Embedding: {embeddings.text_embedding[0:10]}")
 
     return embeddings
 
@@ -67,7 +71,7 @@ def product_to_json(product):
     # Setting unpicklable=False generates a JSON representation of the object
     # that can be easily converted back to a dictionary, but not necessarily back to the original object.
     json_str = jsonpickle.encode(product, unpicklable=False)
-    print(json_str)
+    # print(json_str)
     return jsonpickle.encode(product, unpicklable=False)
 
 
@@ -95,9 +99,11 @@ class DownloadImage(beam.DoFn):
             product = element  # Assuming element is the product object
             print(f"Processing product: {element.headers[0].name}")
             image_url = product.headers[0].images[0].origin_url
+            print("===")
             print(image_url)
             print(product.business_keys[0].name)
             print(product.business_keys[0].value)
+            print("===")
             response = requests.get(image_url)
             if response.status_code == 200:
                 blob_name = f'images/{product.business_keys[0].value}.jpg'
@@ -106,9 +112,9 @@ class DownloadImage(beam.DoFn):
                 blob.upload_from_string(response.content, content_type='image/jpeg')
                 gcs_url = f'gs://{self.bucket_name}/{blob_name}'
                 product.headers[0].images[0].url = gcs_url
-                print(product.headers[0].images[0].url)
                 yield 'success', product
             else:
+                print(f"[Error]{image_url}")
                 yield 'failure', f'Failed to download image from {image_url}'
         except Exception as e:
             yield 'failure', str(e)
@@ -145,20 +151,89 @@ class CallEmbeddingAPI(beam.DoFn):
 def partition_fn(element, num_partitions):
     return 0 if element[0] == 'success' else 1
 
-def run():
+class AggregateToList(beam.CombineFn):
+    def create_accumulator(self):
+        return []
+
+    def add_input(self, accumulator, input):
+        json_input = json.loads(input)
+        accumulator.append(json_input)
+        # accumulator.append(input)
+        return accumulator
+
+    def merge_accumulators(self, accumulators):
+        return [item for sublist in accumulators for item in sublist]
+
+    def extract_output(self, accumulator):
+        return accumulator
+
+class WriteToGCS(beam.DoFn):
+    def __init__(self, project_id, bucket, file_name):
+        self.project_id = project_id
+        self.bucket = bucket
+        self.file_name = file_name
+
+    def process(self, element):
+        client = storage.Client(self.project_id)
+        bucket = client.get_bucket(self.bucket)
+        blob = bucket.blob(self.file_name)
+        blob.upload_from_string(f"{element}")
+
+def run(argv=None, save_main_session=True):
+    ## ===
+    """Main entry point; defines and runs the wordcount pipeline."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--input_subscription",
+        dest="subscription",
+        help="Input PubSub subscription of the form "
+        '"projects/<PROJECT>/subscriptions/<SUBSCRIPTION>."',
+    )
+    parser.add_argument(
+        '--csv_path',
+        dest='csv_path',
+        required=True,
+        help='CSV file GCS url')
+    parser.add_argument(
+        '--bucket',
+        dest='bucket',
+        required=True,
+        help='GCS Bucket name for storing product images and information.')
+    known_args, pipeline_args = parser.parse_known_args(argv)
+    # print(pipeline_args[pipeline_args.index("--project") + 1])
+    # We use the save_main_session option because one or more DoFn's in this
+    # workflow rely on global context (e.g., a module imported at module level).
+    pipeline_options = PipelineOptions(pipeline_args)
+    pipeline_options.view_as(SetupOptions).save_main_session = save_main_session
+    ## ===
+
     pipeline_options = PipelineOptions(
         # Your pipeline options
         runner='DirectRunner'
     )
 
-    csv_file_path = '/usr/local/google/home/abhishekbhgwt/applied-ai/third_party/flipkart/ecommerce-sample_small.csv'
-    bucket_name = 'pc-dataflow-test'
-    output_file_path = '/usr/local/google/home/abhishekbhgwt/applied-ai/third_party/flipkart/output'
+    subscription_id = known_args.subscription
+    csv_file_path = known_args.csv_path # '/usr/local/google/home/kalschi/solutions/applied-ai/third_party/flipkart/ecommerce-sample_small.csv'
+    bucket_name = known_args.bucket # "kalschi-etl-test" # 'pc-dataflow-test'
+    output_file_path = "jsonl/rdm.jsonl" # '/usr/local/google/home/kalschi/solutions/applied-ai/third_party/flipkart/output' #f"gs://{known_args.bucket}/jsonl"# 
+
+    if "--project" in pipeline_args:
+        project_id = pipeline_args[pipeline_args.index("--project") + 1]
+    elif "-p" in pipeline_args:
+        project_id = pipeline_args[pipeline_args.index("-p") + 1]
 
     with beam.Pipeline(options=pipeline_options) as p:
+        # raw_data = (
+        #     p
+        #     | 'Read CSV File' >> ReadFromText(csv_file_path, skip_header_lines=1)
+        #     | 'Parse CSV Lines' >> beam.Map(lambda x: dict(zip(FILE_COLUMNS.keys(), x.split(','))))
+        # )
+
+        # Each CSV Message MUST have a header row
         raw_data = (
             p
-            | 'Read CSV File' >> ReadFromText(csv_file_path, skip_header_lines=1)
+            | 'Read Pub/Sub' >> beam.io.ReadFromPubSub( subscription=subscription_id).with_output_types(bytes)
+            | "UTF-8 bytes to string" >> beam.Map(lambda msg: msg.decode("utf-8"))
             | 'Parse CSV Lines' >> beam.Map(lambda x: dict(zip(FILE_COLUMNS.keys(), x.split(','))))
         )
 
@@ -184,9 +259,11 @@ def run():
         embedding_results = (
             success_downloads
             | 'Extract Success Downloads' >> beam.Map(lambda x: x[1])  # Extract the product object from the tuple
-            | 'Call Embedding API' >> beam.ParDo(CallEmbeddingAPI(project_id='customermod-genai-sa', location='us-central1'))
+            | 'Call Embedding API' >> beam.ParDo(CallEmbeddingAPI(project_id=project_id, location='us-central1'))
             | 'Convert to JSON' >> beam.Map(product_to_json)
-            | 'Write to GCS' >> WriteToText(output_file_path, file_name_suffix='.jsonl', shard_name_template='')
+            | 'Aggregate to List' >> beam.CombineGlobally(AggregateToList())
+            | 'Write to GCS' >> beam.ParDo(WriteToGCS(project_id=project_id, bucket=bucket_name, file_name=output_file_path))
+            # | 'Write to GCS' >> WriteToText(f"gs://{known_args.bucket}/jsonl/file", file_name_suffix='.jsonl', shard_name_template='')
         )
 
         # Optionally, write failed records to some sink for inspection

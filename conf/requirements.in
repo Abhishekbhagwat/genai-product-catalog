@@ -14,7 +14,7 @@ jupyterlab
 
 # Required Google and Protobuf APIs
 google-api-python-client
-google-cloud-aiplatform==1.39.0
+google-cloud-aiplatform==1.42.1
 google-cloud-storage
 google-cloud-bigquery
 gcloud
@@ -26,3 +26,6 @@ fastapi
 uvicorn
 
 pydoc-markdown
+
+# Dataflow
+apache_beam

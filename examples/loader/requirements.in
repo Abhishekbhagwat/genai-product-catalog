@@ -28,6 +28,7 @@ uvicorn
 pydoc-markdown
 
 # Dataflow
-apache_beam
+apache_beam==2.51.0 #2.53.0
 google.cloud.pubsub
-apache_beam[gcp]==2.51.0
+google.cloud.logging
+apache_beam[gcp]==2.51.0 #2.53.0

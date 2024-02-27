@@ -107,29 +107,9 @@ gcloud dataflow flex-template build $TEMPLATE_PATH \
   --metadata-file "metadata.json"
 ```
 
-* Run
+* Submit to Google Cloud Dataflow Runner
 
 ```shell
-
-
-# Run the Flex Template.
-# python -m dataflow_loader \
-#     --region us-central1 \
-#     --runner DirectRunner \
-#     --project customermod-genai-sa \
-#     --input_subscription="projects/customermod-genai-sa/subscriptions/rdm_topic-sub" \
-#     --bucket="kalschi_etl_2" \
-#     --temp_location gs://kalschi-etl-test/tmp/ 2>&1 | tee log.txt
-
-# python -m dataflow_loader \
-#     --streaming \
-#     --setup_file ./setup.py \
-#     --region us-central1 \
-#     --runner DataflowRunner \
-#     --project customermod-genai-sa \
-#     --input_subscription="projects/customermod-genai-sa/subscriptions/rdm_topic-sub" \
-#     --bucket="kalschi_etl_2" \
-#     --temp_location gs://kalschi-etl-test/tmp/ 2>&1 | tee log.txt
 
 export REGION="us-central1"
 
@@ -137,8 +117,23 @@ gcloud dataflow flex-template run "streaming-beam-kalschi-`date +%Y%m%d-%H%M%S`"
     --template-file-gcs-location "$TEMPLATE_PATH" \
     --temp-location gs://kalschi-etl-test/tmp/ \
     --project $PROJECT \
-    --parameters input_subscription="projects/customermod-genai-sa/subscriptions/rdm_topic-sub" \
+    --parameters input_subscription="projects/${PROJECT}/subscriptions/rdm_topic-sub" \
     --parameters bucket="kalschi_etl_2" \
+    --parameters bq-table-id="kalschi_products.product_info" \
     --enable-streaming-engine \
     --region "$REGION"
+```
+
+* DirectRunner
+
+```shell
+python -m dataflow_loader \
+    --region "${REGION}" \
+    --runner DirectRunner \
+    --project "${PROJECT}" \
+    --input_subscription="projects/${PROJECT}/subscriptions/rdm_topic-sub" \
+    --bucket="${BUCKET}" \
+    --bq-table-id="kalschi_products.product_info" \
+    --streaming \
+    --temp_location gs://kalschi-etl-test/tmp/
 ```

@@ -14,6 +14,11 @@
             "name": "bucket",
             "label": "GCS Bucket name for storing product images and information.",
             "helpText": "GCS Bucket name for storing product images and information."
+        },
+        {
+            "name": "bq-table-id",
+            "label": "BigQuery Fully qualified table id in <DATASET>.<TABLE> format.",
+            "helpText": "BigQuery Fully qualified table id in <DATASET>.<TABLE> format."
         }
     ]
 }

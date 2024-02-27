@@ -35,9 +35,6 @@ from vertexai.vision_models import (
     MultiModalEmbeddingResponse,
 )
 
-# logger = google.cloud.logging.Client()
-# logger.setup_logging()
-
 def get_multimodal_embeddings(
     image_path: str,
     contextual_text: Optional[str] = None,
@@ -219,20 +216,6 @@ class WriteToGCS(beam.DoFn):
         blob.upload_from_string(f"{element}")
 
 
-def get_schema():
-    result = []
-    with open(file="./schema/bq-pdc.json", mode="r") as f:
-        columns = json.load(f)
-        for column in columns:
-            result.append(bigquery.SchemaField(column['name'], column['type']))
-
-        return result
-        for field in schema:
-            result.append(f"{field['name']}:{field['type']}")
-    schema_result = ",".join([line.strip() for line in result])
-    print(schema_result)
-    return schema_result
-
 
 def run(argv=None, save_main_session=True):
     """Main entry point; defines and runs the wordcount pipeline."""
@@ -284,19 +267,12 @@ def run(argv=None, save_main_session=True):
     print(f"*** project_id={project_id}")
     with beam.Pipeline(options=pipeline_options) as p:
         print(f"** Starting pipeline...{subscription_id}")
-        # raw_data = (
-        #     p
-        #     | 'Read Pub/Sub' >> beam.io.ReadFromPubSub(subscription=subscription_id).with_output_types(bytes)
-        #     | "UTF-8 bytes to string" >> beam.Map(lambda msg: msg.decode("utf-8"))
-        #     | 'Parse CSV Lines' >> beam.Map(lambda x: dict(zip(FILE_COLUMNS.keys(), x.split(','))))
-        # )
         print(f"""FILE_COLUMNS={FILE_COLUMNS}""")
         raw_data = (
             p
             | 'Read Pub/Sub' >> beam.io.gcp.pubsub.ReadStringsFromPubSub(subscription=subscription_id)
             | 'Parse CSV Lines' >> beam.Map(lambda x: dict(zip(FILE_COLUMNS.keys(), x.split(','))))
         )
-        print(f"Reading...${raw_data}")
         parsed_data = (
             raw_data
             | 'Parse Row' >> beam.ParDo(ParseRow())
@@ -305,8 +281,6 @@ def run(argv=None, save_main_session=True):
 
         success_data, failed_parse = parsed_data
         
-        print(f"Processing...${success_data}")
-        print(f"bucket_name...${bucket_name}")
         # Process successfully parsed data further
         processed_data = (
             success_data
@@ -323,17 +297,7 @@ def run(argv=None, save_main_session=True):
             | 'Extract Success Downloads' >> beam.Map(lambda x: x[1])  # Extract the product object from the tuple
             | 'Call Embedding API' >> beam.ParDo(CallEmbeddingAPI(project_id=project_id, location='us-central1'))
             | 'Convert to JSON' >> beam.Map(product_to_json)
-            # | 'Write to BigQuery' >> WriteToBigQuery(
-            #     bq_table_id,
-            #     create_disposition=BigQueryDisposition.CREATE_IF_NEEDED,
-            #     write_disposition=BigQueryDisposition.WRITE_APPEND,
-            #     insert_retry_strategy=RetryStrategy.RETRY_ON_TRANSIENT_ERROR,
-            #     schema=get_schema(),
-            #     additional_bq_parameters={
-            #     },
-            # )
             | 'Write to BigQuery' >> beam.ParDo(WriteJsonToBigQuery(project_id=project_id, bq_table_id=bq_table_id))
-            # | 'Aggregate to List' >> beam.CombineGlobally(AggregateToList())
         )
 
         # Optionally, write failed records to some sink for inspection

@@ -2,102 +2,53 @@
 
 ## Introduction
 
-The Data Loader users the Chain of Responsibility and Command pattern.
-These patters were chose to reduce the time of adoption by providing logical
-and simple extensions points.
+The Data Loader uses Dataflow to process and load the data to prepare your catalog to start using the GenAI based features offered by this solution.
 
-### Chain of Responsibility
+We use `Dataflow` and `Pub/Sub` to run this pipeline. The following steps illustrate the entire workflow for the pipeline.
 
-```mermaid
-classDiagram
-  Context <.. Command
-  Command <|-- Chain
-  Chain <|-- ParallelChain
-  class Context{
-    + Dict~str, Any~ values
-    + boolean has_key(key: str)
-  }
-  
-  class Command{
-    + is_executable(context: Context) bool
-    + execute(context: Context) None
-  }
-  
-  class Chain{
-    - List~Command~ commands
-    + add_command(command: Command) Chain
-  }
-  
-  class ParallelChain{
-  }
+## Prerequisites for the pipeline
+
+1. Create a BigQuery table to store the Retail Data Model transformed dataset along with the embeddings
+
+```sql
+CREATE TABLE `<PROJECT_ID>.<DATASET_ID>.<TABLE_ID>`
+(
+  business_keys ARRAY<STRUCT<value STRING, name STRING>>,
+  image_embedding ARRAY<FLOAT64>,
+  text_embedding ARRAY<FLOAT64>,
+  categories ARRAY<STRUCT<children ARRAY<STRUCT<children ARRAY<STRUCT<children ARRAY<STRUCT<children ARRAY<STRING>, name STRING, id STRING>>, name STRING, id STRING>>, name STRING, id STRING>>, name STRING, id STRING>>,
+  base_price STRUCT<rounding_rule STRUCT<trim_insignificant_digits BOOL, relevant_decimal INT64>, value STRUCT<decimal INT64, whole INT64>, code STRING>,
+  headers ARRAY<STRUCT<attribute_values ARRAY<STRING>, images ARRAY<STRUCT<url STRING, origin_url STRING>>, nlp_description STRING, locale STRING, long_description STRING, short_description STRING, brand STRING, name STRING>>
+);
 ```
-> NOTE: See the `chain.py` python file for examples: [here](chain.py).
 
-## Default Commands
+2. Place a CSV record of your product dataset under `/applied-ai/third_party/flipkart`
 
-The following is a list of default commands. These commands are used in 
-conjunction with the configuration file "conf/app.toml".
+3. Create a GCS bucket with your `<BUCKET_NAME>` to store various metadata and images, etc.
 
-### Chain 1 - Validation
+4. Create a folder inside GCS named `dataflow` and upload the local file `streaming-beam.json` to that folder
 
-Used for validating the state prior to execution.
+5. Create a [Pub/Sub topic](https://cloud.google.com/pubsub/docs/create-topic#create_a_topic_2) and [subscription](https://cloud.google.com/pubsub/docs/create-subscription#create_a_pull_subscription) to publish messages (rows of data) and subscription to trigger the dataflow processing job. 
 
-* VerifyEnvironmentCommand
-* VerifyAndConnectToBigQueryCommand
-* VerifyAndOrCreateBigQuerySchema
+6. Remeber to keep track of the IDs of the resources created above to plug into the code snippets below.
 
-### Chain 2 - CSVLoader
+## Create Dataflow Pipeline
 
-This chain validates and loads the CSV file into the Retail Data Model (RDM).
-The in-memory representation of RDM is then used in Chain 3 to load the data
-into your cloud instance.
+The follwing steps illustrate how you can run the data procesing pipeline in various scenarios.
 
-* CSVToRDMCommand
 
-### Chain 3a - RT Loader Chain
-
-This loader chain is a set of real-time, parallel tasks using a fork join strategy.
-The initial command reads a single row, then hands the row to multiple excutors,
-and waits for the response.
-
-* RDMReaderCommand
-* 
-* RTVerifyCommand
-
-### Chain 3b - Batch Loader Chain
-
-This chain is used to execute in batch and requires access to the local
-file system to execute. It uses the local file system to store images and
-embedding text to then load the data via a batch processor. This chain IS
-RECOMMENDED for large data loading.
-
-* RDMReaderCommand
-* Chain4
-* JOINAndWriteCommand
-* BatchLoadCommand
-
-### Chain 4 - Parallel Chain
-
-* ImageLoaderCommand
-* GCSImageStorageCommand
-* LocalImageStorageCommand
-* BatchLoadImagesCommand
-* EmbeddingGeneratorCommand
-* LocalEmbeddingStorageCommand
-* BQEmbeddingLoaderCommand
-
-# Create Dataflow Pipeline
-
-* Build Container Image
+1. Build Container Image
 
 ```shell
-export PROJECT=customermod-genai-sa
+export PROJECT=<PROJECT_ID>
 export TEMPLATE_IMAGE="gcr.io/$PROJECT/dataflow/streaming-beam:latest"
 gcloud builds submit --project $PROJECT --tag "$TEMPLATE_IMAGE" .
 ```
 
+2. Build the Dataflow Flex template to run the pipeline
+
 ```shell
-export BUCKET=kalschi_etl_2
+export BUCKET=<BUCKET_NAME>
 export TEMPLATE_PATH="gs://$BUCKET/dataflow/templates/streaming-beam.json"
 
 # Build the Flex Template.
@@ -107,33 +58,40 @@ gcloud dataflow flex-template build $TEMPLATE_PATH \
   --metadata-file "metadata.json"
 ```
 
-* Submit to Google Cloud Dataflow Runner
+3. Submit the job to Google Cloud Dataflow Runner
 
 ```shell
-
 export REGION="us-central1"
 
-gcloud dataflow flex-template run "streaming-beam-kalschi-`date +%Y%m%d-%H%M%S`" \
+gcloud dataflow flex-template run "streaming-beam-<JOB_ID>-`date +%Y%m%d-%H%M%S`" \
     --template-file-gcs-location "$TEMPLATE_PATH" \
-    --temp-location gs://kalschi-etl-test/tmp/ \
+    --temp-location gs://<GCS_LOGS_BUCKET_NAME>/tmp/ \
     --project $PROJECT \
-    --parameters input_subscription="projects/${PROJECT}/subscriptions/rdm_topic-sub" \
-    --parameters bucket="kalschi_etl_2" \
-    --parameters bq-table-id="kalschi_products.product_info" \
+    --parameters input_subscription="projects/${PROJECT}/subscriptions/<SUBSCRIPTION_NAME>" \
+    --parameters bucket="<BUCKET_NAME>" \
+    --parameters bq-table-id="<DATASET_ID>.<TABLE_ID >" \
     --enable-streaming-engine \
     --region "$REGION"
 ```
 
-* DirectRunner
+4. [OPTIONAL] For local testing, you can use DirectRunner
 
 ```shell
 python -m dataflow_loader \
     --region "${REGION}" \
     --runner DirectRunner \
     --project "${PROJECT}" \
-    --input_subscription="projects/${PROJECT}/subscriptions/rdm_topic-sub" \
+    --input_subscription="projects/${PROJECT}/subscriptions/<SUBSCRIPTION_NAME>" \
     --bucket="${BUCKET}" \
-    --bq-table-id="kalschi_products.product_info" \
+    --bq-table-id="<DATASET_ID>.<TABLE_ID >" \
     --streaming \
-    --temp_location gs://kalschi-etl-test/tmp/
+    --temp-location gs://<GCS_LOGS_BUCKET_NAME>/tmp/
+```
+
+5. Run the python script to publish the dataset rows to `Pub/Sub`
+```shell
+ python3 publish_csv.py \
+    --project=$PROJECT_ID \
+    --topic=$TOPIC_NAME \
+    --csv-path=$CSV_DATASET_PATH
 ```

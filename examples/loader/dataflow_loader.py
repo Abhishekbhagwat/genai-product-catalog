@@ -7,8 +7,6 @@ import logging
 import requests
 import vertexai
 
-from apache_beam.io import BigQueryDisposition, ReadFromPubSub, WriteToBigQuery
-from apache_beam.io.gcp.bigquery_tools import RetryStrategy
 from apache_beam.options.pipeline_options import PipelineOptions
 
 from google.cloud import bigquery, storage
@@ -23,27 +21,19 @@ from vertexai.vision_models import (
 
 import google.cloud.logging
 
+
 def get_multimodal_embeddings(
     image_path: str,
     contextual_text: Optional[str] = None,
-    project_id: str = 'customermod-genai-sa',
-    location: str = 'us-central1',
+    project_id: str = "customermod-genai-sa",
+    location: str = "us-central1",
     dimension: int = 1408,
 ) -> MultiModalEmbeddingResponse:
-    """Example of how to generate multimodal embeddings from image and text.
-
-    Args:
-        project_id: Google Cloud Project ID, used to initialize vertexai
-        location: Google Cloud Region, used to initialize vertexai
-        image_path: Path to image (local or Google Cloud Storage) to generate embeddings for.
-        contextual_text: Text to generate embeddings for.
-        dimension: Dimension for the returned embeddings.
-            https://cloud.google.com/vertex-ai/docs/generative-ai/embeddings/get-multimodal-embeddings#low-dimension
-    """
-
     vertexai.init(project=project_id, location=location)
 
-    embedding_model = MultiModalEmbeddingModel.from_pretrained("multimodalembedding@001")
+    embedding_model = MultiModalEmbeddingModel.from_pretrained(
+        "multimodalembedding@001"
+    )
 
     image = Image.load_from_file(image_path)
 
@@ -59,17 +49,10 @@ def get_multimodal_embeddings(
 
 
 def product_to_json(product):
-    """
-    Serialize a Product object to a JSON string using jsonpickle.
-    
-    Args:
-        product: The Product object to serialize.
-        
-    Returns:
-        A JSON string representing the serialized Product object.
-    """
+    # Serialize a Product object to a JSON string using jsonpickle.
     # Setting unpicklable=False generates a JSON representation of the object
     # that can be easily converted back to a dictionary, but not necessarily back to the original object.
+
     json_str = jsonpickle.encode(product, unpicklable=False)
     log(f"[product_to_json]{json_str}")
     return json_str
@@ -83,22 +66,23 @@ class ParseRow(beam.DoFn):
             if product:
                 # Yielding as a tuple (success indicator, data)
                 print(product.headers[0].name)
-                yield 'success', product
+                yield "success", product
         except Exception as e:
             # Yielding as a tuple (failure indicator, error message)
-            yield 'failure', str(e)
+            yield "failure", str(e)
 
 
-def log(text:str):
+def log(text: str):
     try:
         client = google.cloud.logging.Client()
         logger = client.logger("RDM_Dataflow")
         logger.log_text(text)
-        
+
     except Exception as e:
         logging.info(f"[RDM_Dataflow]{e}")
         print(f"[RDM_Dataflow]Exception:{e}")
         raise e
+
 
 class DownloadImage(beam.DoFn):
     def __init__(self, bucket_name):
@@ -113,19 +97,19 @@ class DownloadImage(beam.DoFn):
             image_url = product.headers[0].images[0].origin_url
             response = requests.get(image_url)
             if response.status_code == 200:
-                blob_name = f'images/{product.business_keys[0].value}.jpg'
+                blob_name = f"images/{product.business_keys[1].value}.jpg"
                 bucket = client.bucket(self.bucket_name)
                 blob = bucket.blob(blob_name)
-                blob.upload_from_string(response.content, content_type='image/jpeg')
-                gcs_url = f'gs://{self.bucket_name}/{blob_name}'
+                blob.upload_from_string(response.content, content_type="image/jpeg")
+                gcs_url = f"gs://{self.bucket_name}/{blob_name}"
                 product.headers[0].images[0].url = gcs_url
-                yield 'success', product
+                print(gcs_url)
+                yield "success", product
             else:
                 print(f"[Error]{image_url}")
-                yield 'failure', f'Failed to download image from {image_url}'
+                yield "failure", f"Failed to download image from {image_url}"
         except Exception as e:
-            yield 'failure', str(e)
-
+            yield "failure", str(e)
 
 
 class CallEmbeddingAPI(beam.DoFn):
@@ -139,12 +123,16 @@ class CallEmbeddingAPI(beam.DoFn):
         try:
             product = element  # Assuming element is a tuple (status, product)
             image_path = product.headers[0].images[0].url
-            contextual_text = product.headers[0].name + product.headers[0].long_description + product.headers[0].brand
+            contextual_text = (
+                product.headers[0].name
+                + product.headers[0].long_description
+                + product.headers[0].brand
+            )
             embeddings = get_multimodal_embeddings(
                 project_id=self.project_id,
                 location=self.location,
                 image_path=image_path,
-                contextual_text=contextual_text
+                contextual_text=contextual_text,
             )
             # Assuming you want to store or do something with the embeddings here
             # For simplicity, just printing the embeddings
@@ -152,16 +140,18 @@ class CallEmbeddingAPI(beam.DoFn):
             product.text_embedding = embeddings.text_embedding
             print("embedding finished")
             log("embedding finished")
-            yield 'success', product
+            yield "success", product
         except Exception as e:
             print(f"[CallEmbeddingAPI][Error]{e}")
             log(f"[CallEmbeddingAPI][Error]{e}")
-            yield 'failure', str(e)
+            yield "failure", str(e)
+
 
 def partition_fn(element, num_partitions):
     print(f"...partition_fn...{num_partitions}:{element}")
     log(f"...partition_fn...{num_partitions}:{element}")
-    return 0 if element[0] == 'success' else 1
+    return 0 if element[0] == "success" else 1
+
 
 class AggregateToList(beam.CombineFn):
     def create_accumulator(self):
@@ -181,7 +171,7 @@ class AggregateToList(beam.CombineFn):
 
 
 class WriteJsonToBigQuery(beam.DoFn):
-    def __init__(self, project_id:str, bq_table_id:str):
+    def __init__(self, project_id: str, bq_table_id: str):
         self.project_id = project_id
         self.fully_qualified_table = bq_table_id
 
@@ -199,13 +189,16 @@ class WriteJsonToBigQuery(beam.DoFn):
                 bq_client = bigquery.Client(self.project_id)
                 table = bq_client.get_table(self.fully_qualified_table)
                 result = bq_client.insert_rows_json(table, [data])
-                print(f"[WriteJsonToBigQuery]Insert [{self.fully_qualified_table}] Completed:{result}")
-                log(f"[WriteJsonToBigQuery]Insert [{self.fully_qualified_table}] Completed:{result}")
+                print(
+                    f"[WriteJsonToBigQuery]Insert [{self.fully_qualified_table}] Completed:{result}"
+                )
+                log(
+                    f"[WriteJsonToBigQuery]Insert [{self.fully_qualified_table}] Completed:{result}"
+                )
             return element
         except Exception as e:
             log(f"[WriteJsonToBigQuery][Exception] [{e}")
             raise e
-            
 
 
 class WriteToGCS(beam.DoFn):
@@ -215,13 +208,11 @@ class WriteToGCS(beam.DoFn):
         self.file_name = file_name
 
     def process(self, element):
-        
         print(f"[WriteToGCS]:{self.bucket} | {self.file_name}")
         client = storage.Client(self.project_id)
         bucket = client.get_bucket(self.bucket)
         blob = bucket.blob(self.file_name)
         blob.upload_from_string(f"{element}")
-
 
 
 def run(argv=None, save_main_session=True):
@@ -235,15 +226,17 @@ def run(argv=None, save_main_session=True):
         '"projects/<PROJECT>/subscriptions/<SUBSCRIPTION>."',
     )
     parser.add_argument(
-        '--bucket',
-        dest='bucket',
+        "--bucket",
+        dest="bucket",
         required=True,
-        help='GCS Bucket name for storing product images and information.')
+        help="GCS Bucket name for storing product images and information.",
+    )
     parser.add_argument(
-        '--bq-table-id',
-        dest='bq_table_id',
+        "--bq-table-id",
+        dest="bq_table_id",
         required=True,
-        help='Full qualified BigQuery dataset id in <DATASET_ID>.<TABLE_ID> format.')
+        help="Full qualified BigQuery dataset id in <DATASET_ID>.<TABLE_ID> format.",
+    )
 
     known_args, pipeline_args = parser.parse_known_args(argv)
 
@@ -253,7 +246,8 @@ def run(argv=None, save_main_session=True):
         pipeline_args,
         save_main_session=True,
         streaming=True,
-        setup_file="/template/setup.py")
+        setup_file="/template/setup.py",
+    )
 
     project_id = ""
 
@@ -266,7 +260,6 @@ def run(argv=None, save_main_session=True):
         if len(items) > 0:
             project_id = items[0].split("=")[1]
 
-
     subscription_id = known_args.subscription
     bucket_name = known_args.bucket
     bq_table_id = f"{project_id}.{known_args.bq_table_id}"
@@ -274,51 +267,52 @@ def run(argv=None, save_main_session=True):
     print(f"*** project_id={project_id}")
     with beam.Pipeline(options=pipeline_options) as p:
         print(f"** Starting pipeline...{subscription_id}")
-        # raw_data = (
-        #     p
-        #     | 'Read Pub/Sub' >> beam.io.ReadFromPubSub(subscription=subscription_id).with_output_types(bytes)
-        #     | "UTF-8 bytes to string" >> beam.Map(lambda msg: msg.decode("utf-8"))
-        #     | 'Parse CSV Lines' >> beam.Map(lambda x: dict(zip(FILE_COLUMNS.keys(), x.split(','))))
-        # )
         print(f"""FILE_COLUMNS={FILE_COLUMNS}""")
+
         raw_data = (
             p
-            | 'Read Pub/Sub' >> beam.io.gcp.pubsub.ReadStringsFromPubSub(subscription=subscription_id)
-            | 'Parse CSV Lines' >> beam.Map(lambda x: dict(zip(FILE_COLUMNS.keys(), x.split(','))))
+            | "Read Pub/Sub"
+            >> beam.io.gcp.pubsub.ReadStringsFromPubSub(subscription=subscription_id)
+            | "Parse CSV Lines"
+            >> beam.Map(lambda x: dict(zip(FILE_COLUMNS.keys(), x.split(","))))
         )
         parsed_data = (
             raw_data
-            | 'Parse Row' >> beam.ParDo(ParseRow())
-            | 'Partition by Parse Success' >> beam.Partition(partition_fn, 2)
+            | "Parse Row" >> beam.ParDo(ParseRow())
+            | "Partition by Parse Success" >> beam.Partition(partition_fn, 2)
         )
 
         success_data, failed_parse = parsed_data
-        
+
         print(f"bucket_name...${bucket_name}")
         # Process successfully parsed data further
         processed_data = (
             success_data
-            | 'Extract Success Data' >> beam.Map(lambda x: x[1])  # Extract the product object from the tuple
-            | 'Download Image to GCS' >> beam.ParDo(DownloadImage(bucket_name=bucket_name))
-            | 'Partition by Download Success' >> beam.Partition(partition_fn, 2)
+            | "Extract Success Data"
+            >> beam.Map(lambda x: x[1])  # Extract the product object from the tuple
+            | "Download Image to GCS"
+            >> beam.ParDo(DownloadImage(bucket_name=bucket_name))
+            | "Partition by Download Success" >> beam.Partition(partition_fn, 2)
         )
 
         success_downloads, failed_downloads = processed_data
-        
+
         # # Call Embedding API on successfully downloaded images
         embedding_results = (
             success_downloads
-            | 'Extract Success Downloads' >> beam.Map(lambda x: x[1])  # Extract the product object from the tuple
-            | 'Call Embedding API' >> beam.ParDo(CallEmbeddingAPI(project_id=project_id, location='us-central1'))
-            | 'Convert to JSON' >> beam.Map(product_to_json)
-            | 'Write to BigQuery' >> beam.ParDo(WriteJsonToBigQuery(project_id=project_id, bq_table_id=bq_table_id))
+            | "Extract Success Downloads"
+            >> beam.Map(lambda x: x[1])  # Extract the product object from the tuple
+            | "Call Embedding API"
+            >> beam.ParDo(
+                CallEmbeddingAPI(project_id=project_id, location="us-central1")
+            )
+            | "Convert to JSON" >> beam.Map(product_to_json)
+            | "Write to BigQuery"
+            >> beam.ParDo(
+                WriteJsonToBigQuery(project_id=project_id, bq_table_id=bq_table_id)
+            )
         )
 
-        # Optionally, write failed records to some sink for inspection
-        # (failed_parse, failed_downloads
-        # | 'Merge Failure Collections' >> beam.Flatten()
-        # | 'Write Failures to GCS' >> beam.io.WriteToText('gs://your-bucket/failures.txt')
-        # )
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run()

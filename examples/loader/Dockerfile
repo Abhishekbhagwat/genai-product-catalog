@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM gcr.io/dataflow-templates-base/python3-template-launcher-base:flex_templates_base_image_release_20240108_RC00
+# FROM gcr.io/dataflow-templates-base/python311-template-launcher-base:latest
 
+FROM gcr.io/dataflow-templates-base/python3-template-launcher-base:flex_templates_base_image_release_20240108_RC00
 ENV FLEX_TEMPLATE_PYTHON_REQUIREMENTS_FILE="/template/requirements.in"
 ENV FLEX_TEMPLATE_PYTHON_PY_FILE="/template/dataflow_loader.py"
 

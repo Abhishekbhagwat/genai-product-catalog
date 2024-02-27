@@ -147,6 +147,7 @@ class CallEmbeddingAPI(beam.DoFn):
             
             yield 'success', product
         except Exception as e:
+            print(f"[CallEmbeddingAPI][Error]{e}")
             yield 'failure', str(e)
 
 def partition_fn(element, num_partitions):

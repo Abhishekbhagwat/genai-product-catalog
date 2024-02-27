@@ -128,7 +128,7 @@ gcloud dataflow flex-template run "streaming-beam-kalschi-`date +%Y%m%d-%H%M%S`"
 
 ```shell
 python -m dataflow_loader \
-    --region "${REGION} \
+    --region "${REGION}" \
     --runner DirectRunner \
     --project "${PROJECT}" \
     --input_subscription="projects/${PROJECT}/subscriptions/rdm_topic-sub" \

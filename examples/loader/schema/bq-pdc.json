@@ -26,7 +26,7 @@
     },
     {
         "name": "headers",
-        "type": "ARRAY<STRUCT<attribute_values ARRAY<STRING>, images ARRAY<STRUCT<url STRING, origin_url STRING>>, nlp_description BOOL, locale STRING, long_description STRING, short_description STRING, brand STRING, name STRING>>",
+        "type": "ARRAY<STRUCT<attribute_values ARRAY<STRING>, images ARRAY<STRUCT<url STRING, origin_url STRING>>, nlp_description STRING, locale STRING, long_description STRING, short_description STRING, brand STRING, name STRING>>",
         "mode": "NULLABLE"
     }
 ]

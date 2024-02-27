@@ -30,4 +30,5 @@ pydoc-markdown
 # Dataflow
 apache_beam
 google.cloud.pubsub
+google.cloud.logging
 apache_beam[gcp]==2.51.0

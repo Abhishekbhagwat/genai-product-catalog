@@ -11,6 +11,7 @@ from apache_beam.io.gcp.bigquery_tools import RetryStrategy
 from apache_beam.options.pipeline_options import PipelineOptions
 
 from google.cloud import bigquery, storage
+# import google.cloud.logging
 from models.model import parse_row, FILE_COLUMNS
 from typing import Optional
 
@@ -20,6 +21,8 @@ from vertexai.vision_models import (
     MultiModalEmbeddingResponse,
 )
 
+# logger = google.cloud.logging.Client()
+# logger.setup_logging()
 
 def get_multimodal_embeddings(
     image_path: str,
@@ -174,11 +177,15 @@ class WriteJsonToBigQuery(beam.DoFn):
 
     def process(self, element):
         json_data = json.loads(element)
-        _, data = json_data
-        bq_client = bigquery.Client(self.project_id)
-        print(f"* self.fully_qualified_table={data}")
-        table = bq_client.get_table(self.fully_qualified_table)
-        bq_client.insert_rows_json(table, [data])
+        print(f"[WriteJsonToBigQuery]element:{element[0:100]}")
+        status, data = json_data
+        print(f"* status={status}")
+        if status == "success":
+            print(f"[WriteJsonToBigQuery]data:{json.dumps(data)[0:100]}")
+            bq_client = bigquery.Client(self.project_id)
+            table = bq_client.get_table(self.fully_qualified_table)
+            result = bq_client.insert_rows_json(table, [data])
+            print(f"[WriteJsonToBigQuery]Insert [{self.fully_qualified_table}] Completed:{result}")
 
         return element
 

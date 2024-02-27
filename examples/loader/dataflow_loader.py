@@ -1,50 +1,25 @@
 import apache_beam as beam
-from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.options.pipeline_options import SetupOptions
-from apache_beam.io import ReadFromText 
-from apache_beam.io.textio import WriteToText
-from apache_beam.io.gcp.gcsio import GcsIO
-from apache_beam.io.gcp.pubsub import ReadStringsFromPubSub
-import jsonpickle
-import pandas as pd
-import json
-import datetime
-
-from google.cloud import storage
-import requests
-from io import BytesIO
-import os
-import sys
-
-from models.model import parse_row, FILE_COLUMNS
-# try:
-#     from .model import parse_row, FILE_COLUMNS
-#     print("->1")
-# except Exception as e:
-#     try:
-#         from model import parse_row, FILE_COLUMNS
-#         print("->2")
-#     except Exception as e:
-#         try:
-#             from .models.model import parse_row, FILE_COLUMNS
-#             print("->3")
-#         except Exception as e:
-#             try:
-#                 from models.model import parse_row, FILE_COLUMNS
-#                 print("->4")
-#             except Exception as e:
-#                 from .models.model import parse_row, FILE_COLUMNS
-#                 print("->5")
-
-
-from typing import Optional
 import argparse
+import pandas as pd
+import jsonpickle
+import json
+import requests
 import vertexai
+
+from apache_beam.io import BigQueryDisposition, ReadFromPubSub, WriteToBigQuery
+from apache_beam.io.gcp.bigquery_tools import RetryStrategy
+from apache_beam.options.pipeline_options import PipelineOptions
+
+from google.cloud import bigquery, storage
+from models.model import parse_row, FILE_COLUMNS
+from typing import Optional
+
 from vertexai.vision_models import (
     Image,
     MultiModalEmbeddingModel,
     MultiModalEmbeddingResponse,
 )
+
 
 def get_multimodal_embeddings(
     image_path: str,
@@ -95,7 +70,7 @@ def product_to_json(product):
     # that can be easily converted back to a dictionary, but not necessarily back to the original object.
     json_str = jsonpickle.encode(product, unpicklable=False)
     # print(json_str)
-    return jsonpickle.encode(product, unpicklable=False)
+    return json_str # jsonpickle.encode(product, unpicklable=False)
 
 
 class ParseRow(beam.DoFn):
@@ -191,6 +166,23 @@ class AggregateToList(beam.CombineFn):
     def extract_output(self, accumulator):
         return accumulator
 
+
+class WriteJsonToBigQuery(beam.DoFn):
+    def __init__(self, project_id:str, bq_table_id:str):
+        self.project_id = project_id
+        self.fully_qualified_table = bq_table_id
+
+    def process(self, element):
+        json_data = json.loads(element)
+        _, data = json_data
+        bq_client = bigquery.Client(self.project_id)
+        print(f"* self.fully_qualified_table={data}")
+        table = bq_client.get_table(self.fully_qualified_table)
+        bq_client.insert_rows_json(table, [data])
+
+        return element
+
+
 class WriteToGCS(beam.DoFn):
     def __init__(self, project_id, bucket, file_name):
         self.project_id = project_id
@@ -203,6 +195,22 @@ class WriteToGCS(beam.DoFn):
         bucket = client.get_bucket(self.bucket)
         blob = bucket.blob(self.file_name)
         blob.upload_from_string(f"{element}")
+
+
+def get_schema():
+    result = []
+    with open(file="./schema/bq-pdc.json", mode="r") as f:
+        columns = json.load(f)
+        for column in columns:
+            result.append(bigquery.SchemaField(column['name'], column['type']))
+
+        return result
+        for field in schema:
+            result.append(f"{field['name']}:{field['type']}")
+    schema_result = ",".join([line.strip() for line in result])
+    print(schema_result)
+    return schema_result
+
 
 def run(argv=None, save_main_session=True):
     """Main entry point; defines and runs the wordcount pipeline."""
@@ -219,15 +227,24 @@ def run(argv=None, save_main_session=True):
         dest='bucket',
         required=True,
         help='GCS Bucket name for storing product images and information.')
+    parser.add_argument(
+        '--bq-table-id',
+        dest='bq_table_id',
+        required=True,
+        help='Full qualified BigQuery dataset id in <DATASET_ID>.<TABLE_ID> format.')
+
     known_args, pipeline_args = parser.parse_known_args(argv)
+
     # We use the save_main_session option because one or more DoFn's in this
     # workflow rely on global context (e.g., a module imported at module level).
-    pipeline_options = PipelineOptions(pipeline_args, save_main_session=True, streaming=True, setup_file="/template/setup.py")
-
-    subscription_id = known_args.subscription
-    bucket_name = known_args.bucket
+    pipeline_options = PipelineOptions(
+        pipeline_args,
+        save_main_session=True,
+        streaming=True,
+        setup_file="/template/setup.py")
 
     project_id = ""
+
     if "--project" in pipeline_args:
         project_id = pipeline_args[pipeline_args.index("--project") + 1]
     elif "-p" in pipeline_args:
@@ -236,6 +253,12 @@ def run(argv=None, save_main_session=True):
         items = [item for item in pipeline_args if item.startswith("--project=")]
         if len(items) > 0:
             project_id = items[0].split("=")[1]
+
+
+    subscription_id = known_args.subscription
+    bucket_name = known_args.bucket
+    bq_table_id = f"{project_id}.{known_args.bq_table_id}"
+
     print(f"*** project_id={project_id}")
     with beam.Pipeline(options=pipeline_options) as p:
         print(f"** Starting pipeline...{subscription_id}")
@@ -278,9 +301,17 @@ def run(argv=None, save_main_session=True):
             | 'Extract Success Downloads' >> beam.Map(lambda x: x[1])  # Extract the product object from the tuple
             | 'Call Embedding API' >> beam.ParDo(CallEmbeddingAPI(project_id=project_id, location='us-central1'))
             | 'Convert to JSON' >> beam.Map(product_to_json)
-            | 'Print' >> beam.Map(print)
+            # | 'Write to BigQuery' >> WriteToBigQuery(
+            #     bq_table_id,
+            #     create_disposition=BigQueryDisposition.CREATE_IF_NEEDED,
+            #     write_disposition=BigQueryDisposition.WRITE_APPEND,
+            #     insert_retry_strategy=RetryStrategy.RETRY_ON_TRANSIENT_ERROR,
+            #     schema=get_schema(),
+            #     additional_bq_parameters={
+            #     },
+            # )
+            | 'Write to BigQuery' >> beam.ParDo(WriteJsonToBigQuery(project_id=project_id, bq_table_id=bq_table_id))
             # | 'Aggregate to List' >> beam.CombineGlobally(AggregateToList())
-            # | 'Write to GCS' >> beam.ParDo(WriteToGCS(project_id=project_id, bucket=bucket_name, file_name=output_file_path))
         )
 
         # Optionally, write failed records to some sink for inspection

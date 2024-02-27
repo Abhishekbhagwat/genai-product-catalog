@@ -34,6 +34,8 @@ COPY ./dataflow_loader.py /template/
 COPY ./__init__.py /template/
 COPY ./__init__.py /template/models/
 COPY ./setup.py /template/
+COPY ./schema/bq-pdc.json /template/schema/
+
 # COPY ./models/model.py /template/models/
 # COPY ./dataflow_loader.py /template/
 # COPY ./__init__.py /template/

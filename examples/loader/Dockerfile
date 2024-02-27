@@ -13,12 +13,12 @@
 # limitations under the License.
 
 # FROM gcr.io/dataflow-templates-base/python311-template-launcher-base:latest
-
-FROM gcr.io/dataflow-templates-base/python3-template-launcher-base:flex_templates_base_image_release_20240108_RC00
-ENV FLEX_TEMPLATE_PYTHON_REQUIREMENTS_FILE="/template/requirements.in"
+FROM gcr.io/dataflow-templates-base/python311-template-launcher-base:latest
+# FROM gcr.io/dataflow-templates-base/python3-template-launcher-base:flex_templates_base_image_release_20240108_RC00
+ENV FLEX_TEMPLATE_PYTHON_REQUIREMENTS_FILE="/template/requirements.txt"
 ENV FLEX_TEMPLATE_PYTHON_PY_FILE="/template/dataflow_loader.py"
 
-COPY ./requirements.in /template/
+COPY ./requirements.txt /template/
 
 # We could get rid of installing libffi-dev and git, or we could leave them.
 RUN apt-get update \

@@ -77,7 +77,7 @@ def log(text: str):
         client = google.cloud.logging.Client()
         logger = client.logger("RDM_Dataflow")
         logger.log_text(text)
-
+        print(text)
     except Exception as e:
         logging.info(f"[RDM_Dataflow]{e}")
         print(f"[RDM_Dataflow]Exception:{e}")
@@ -102,7 +102,7 @@ class DownloadImage(beam.DoFn):
                 blob = bucket.blob(blob_name)
                 blob.upload_from_string(response.content, content_type="image/jpeg")
                 print("upload done")
-                gcs_url = f"gs:///{self.bucket_name}/{blob_name}"
+                gcs_url = f"gs://{self.bucket_name}/{blob_name}"
                 product.headers[0].images[0].url = gcs_url
                 print(gcs_url)
                 yield "success", product
@@ -119,7 +119,6 @@ class CallEmbeddingAPI(beam.DoFn):
         self.location = location
 
     def process(self, element):
-        print(f"Embedding product: {element.headers[0].name}")
         log(f"Embedding product: {element.headers[0].name}")
         try:
             product = element  # Assuming element is a tuple (status, product)
@@ -139,17 +138,14 @@ class CallEmbeddingAPI(beam.DoFn):
             # For simplicity, just printing the embeddings
             product.image_embedding = embeddings.image_embedding
             product.text_embedding = embeddings.text_embedding
-            print("embedding finished")
             log("embedding finished")
             yield "success", product
         except Exception as e:
-            print(f"[CallEmbeddingAPI][Error]{e}")
             log(f"[CallEmbeddingAPI][Error]{e}")
             yield "failure", str(e)
 
 
 def partition_fn(element, num_partitions):
-    print(f"...partition_fn...{num_partitions}:{element}")
     log(f"...partition_fn...{num_partitions}:{element}")
     return 0 if element[0] == "success" else 1
 
@@ -170,7 +166,6 @@ class AggregateToList(beam.CombineFn):
     def extract_output(self, accumulator):
         return accumulator
 
-
 class WriteJsonToBigQuery(beam.DoFn):
     def __init__(self, project_id: str, bq_table_id: str):
         self.project_id = project_id
@@ -179,23 +174,26 @@ class WriteJsonToBigQuery(beam.DoFn):
     def process(self, element):
         try:
             json_data = json.loads(element)
-            print(f"[WriteJsonToBigQuery]element:{element[0:100]}")
             log(f"[WriteJsonToBigQuery]element:{element[0:100]}")
             status, data = json_data
-            print(f"* status={status}")
             log(f"* status={status}")
             if status == "success":
-                print(f"[WriteJsonToBigQuery]data:{json.dumps(data)[0:100]}")
                 log(f"[WriteJsonToBigQuery]data:{json.dumps(data)[0:100]}")
                 bq_client = bigquery.Client(self.project_id)
                 table = bq_client.get_table(self.fully_qualified_table)
                 result = bq_client.insert_rows_json(table, [data])
-                print(
-                    f"[WriteJsonToBigQuery]Insert [{self.fully_qualified_table}] Completed:{result}"
-                )
                 log(
                     f"[WriteJsonToBigQuery]Insert [{self.fully_qualified_table}] Completed:{result}"
                 )
+
+                if result is not None and result != "":
+                    log(
+                        f"""
+===> Error Json <===
+{data}
+===> End Error Json <===
+                        """
+                    )
             return element
         except Exception as e:
             log(f"[WriteJsonToBigQuery][Exception] [{e}")

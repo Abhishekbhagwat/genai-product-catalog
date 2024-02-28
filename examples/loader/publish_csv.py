@@ -13,22 +13,34 @@
 # limitations under the License.
 
 import argparse
+import os
 
 from concurrent import futures
 from google.cloud import pubsub_v1
 from typing import Callable
+import pandas as pd
+from model import FILE_COLUMNS
+import json
 
 def read_csv(file_path:str) -> list[str]:
-    header = ""
-    lines = []
+    # header = ""
+    # lines = []
 
-    with open(file=file_path, mode="r") as f:
-        all_lines = f.readlines()
-        header = all_lines[0]
-        lines = all_lines[1:]
+    # with open(file=file_path, mode="r") as f:
+    #     all_lines = f.readlines()
+    #     header = all_lines[0]
+    #     lines = all_lines[1:]
     
-    # messages = [f"{header}{line}" for line in lines]
-    messages = lines
+    # # messages = [f"{header}{line}" for line in lines]
+    # messages = list(set(lines))
+    # print(len(messages))
+
+    data = pd.read_csv(file_path, dtype=FILE_COLUMNS)
+    data = data.drop_duplicates(subset=['product_name'])
+    data = data.drop_duplicates(subset=['pid'])
+
+    messages = data.to_dict('records')
+    print(len(messages))
     return messages
 
 def get_callback(
@@ -51,7 +63,7 @@ def publish_message(messages:list[str], project_id:str, topic_id:str) -> None:
     publish_futures = []
 
     for data in messages:
-        publish_future = publisher.publish(topic_path, data.encode("utf-8"))
+        publish_future = publisher.publish(topic_path, json.dumps(data).encode('utf-8'))
         publish_future.add_done_callback(get_callback(publish_future, data))
         publish_futures.append(publish_future)
 

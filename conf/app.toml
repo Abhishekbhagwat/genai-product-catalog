@@ -1,29 +1,29 @@
 [default]
-bucket_name = "rdm-demo-images2"
+bucket_name = "kalschi_etl_2"
 allow_trailing_spaces = true
 allow_trailing_nulls = true
 
 [project]
-id = "solutions-2023-mar-107"
+id = "customermod-genai-sa"
 location = "us-central1"
 endpoint = "us-central1-aiplatform.googleapis.com"
 
 [gcs]
-bucket_name = "rdm-demo-images2"
+bucket_name = "kalschi_etl_2"
 
 [models]
-gemini = "gemini-pro-vision"
-llm = "text-bison"
+gemini = "gemini-1.0-pro-vision-001"
+llm = "text-bison@002"
 
 [vectors]
-index_path = "projects/411826505131/locations/us-central1/indexes/924016377843417088"
-endpoint_id = "4968248843222122496"
-deployed_index = "flipkart_streaming_with_filters"
+index_path = "projects/290493077924/locations/us-central1/indexes/2770527409437409280"
+endpoint_id = "6560869445823102976"
+deployed_index = "flipkart_partial_index_mul_1709050838862"
 number_of_neighbors = 7
 
 [big_query]
-prefix = "solutions-2023-mar-107.flipkart"
-product_table = "solutions-2023-mar-107.flipkart.preprocessed_data"
+prefix = "customermod-genai-sa.kalschi_products"
+product_table = "customermod-genai-sa.kalschi_products.master-final-product-catalog"
 product_id_column = "id"
 product_category_column_list = ["c0_name", "c1_name", "c2_name", "c3_name"]
 product_attributes_column = "attributes"

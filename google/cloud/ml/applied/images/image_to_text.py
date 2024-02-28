@@ -70,7 +70,6 @@ def content_generation(prompt: str, im):
                 "top_p": 1,
                 "top_k": 32
             },
-            stream=True,
         )
     except Exception as e:
         print(e)
@@ -87,23 +86,22 @@ def image_to_attributes(req: m.ImageRequest) -> m.ProductAttributes:
         im = from_url(req.image)
 
     responses = content_generation(prompt, im)
-    res = ''
-
-    for response in responses:
-        res += response.candidates[0].content.parts[0].text
-        res = res.replace('```', '')
-        res = res.replace('json', '')
+    res = responses.text
+    res = res.replace('```', '')
+    res = res.replace('json', '')
 
     # This produces multiple models, NOT USEFUL for API calls.
     # had to create a parser to return consistent values
+
     attributes_json = json.loads(res.strip())
+    print(attributes_json)
     
     if "product_attributes" not in attributes_json:
         print('parsing')
         response = m.parse_project_attributes_from_dict(attributes_json)
     else:
-        response = m.parse_list_to_dict(attributes_json.get('product_attributes'))
-        response = m.parse_project_attributes_from_dict(response)
+        # response = m.parse_list_to_dict(attributes_json.get('product_attributes'))
+        response = m.parse_project_attributes_from_dict(attributes_json.get('product_attributes'))
 
     return response
 

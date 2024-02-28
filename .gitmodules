@@ -1,0 +1,3 @@
+[submodule "legacy/genai-product-catalog"]
+	path = legacy/genai-product-catalog
+	url = https://github.com/GoogleCloudPlatform/genai-product-catalog.git

@@ -48,13 +48,15 @@ class MarketingRequest(BaseModel):
 class TextValue(BaseModel):
     text: str
 
+
 def parse_project_attributes_from_dict(obj: dict) -> ProductAttributes:
     out = ProductAttributes()
 
     for k in obj.keys():
-        out.product_attributes.append({'attribute_name': k, 'attribute_value': obj[k]})
+        out.product_attributes.append({"attribute_name": k, "attribute_value": obj[k]})
 
     return out
+
 
 def attribute_values_to_dict(values: list[AttributeValue]) -> dict[str, str]:
     out: dict[str, str] = {}

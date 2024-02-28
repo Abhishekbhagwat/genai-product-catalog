@@ -12,18 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from fastapi import APIRouter, HTTPException
-from models.checks_model import (
-    Liveliness,
-    Status
-)
+from fastapi import APIRouter
+from models.checks_model import Liveliness, Status
 
 router = APIRouter()
 
-@router.get('/readiness_check')
-def readiness_check() -> Status:
-    return Status(status='ready')
 
-@router.get('/liveness_check')
+@router.get("/readiness_check")
+def readiness_check() -> Status:
+    return Status(status="ready")
+
+
+@router.get("/liveness_check")
 def liveness_check() -> Liveliness:
-    return Liveliness(message='ready')
+    return Liveliness(message="ready")

@@ -13,21 +13,15 @@
 # limitations under the License.
 
 from fastapi import APIRouter, HTTPException
-from models.common_model import (
-    ImageRequest,
-    TextValue,
-    ProductAttributes
-)
+from models.common_model import ImageRequest, TextValue, ProductAttributes
 
 from google.cloud.ml.applied.images import image_to_text
 
 router = APIRouter()
 
 
-@router.post('/api/v1/genai/images/attributes')
-def generate_attributes(
-    image_request: ImageRequest
-) -> ProductAttributes:
+@router.post("/api/v1/genai/images/attributes")
+def generate_attributes(image_request: ImageRequest) -> ProductAttributes:
     """
     Extracts attributes detected from product's image.
     """
@@ -38,11 +32,10 @@ def generate_attributes(
         raise HTTPException(status_code=500, detail=str(e))
     else:
         return response
-    
-@router.post('/api/v1/genai/images/descriptions')
-def generate_description(
-    image_request: ImageRequest
-) -> TextValue:
+
+
+@router.post("/api/v1/genai/images/descriptions")
+def generate_description(image_request: ImageRequest) -> TextValue:
     """
     Generates a product description from an image of product.
     """

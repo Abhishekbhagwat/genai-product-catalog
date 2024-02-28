@@ -17,7 +17,7 @@ import sys
 
 import uvicorn
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # freeze_support()
     sys.argv.insert(1, "genai.main:app")
     sys.exit(uvicorn.main())

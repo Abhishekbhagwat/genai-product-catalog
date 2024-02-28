@@ -1,4 +1,12 @@
-# Applied AI
+# GenAI for Product Catalog Enrichment
+
+This repository showcases the application of Google Cloud's Generative AI for product cataloging. The solution will:
+
+- Suggest product category given a sparse description and (optionally) a product image
+- Generate product attributes
+- Generate detailed marketing copy for these products
+
+These results are grounded using a customer provided product catalog, enabling more specific and relevant results than a purely generative approach would provide.
 
 ## Data Scientist / Developer Setup
 
@@ -44,7 +52,6 @@ pip install --upgrade pip
 # Install dependencies
 pip install -r build/requirements.txt
 ```
-
 
 
 

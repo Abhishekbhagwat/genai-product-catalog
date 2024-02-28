@@ -43,8 +43,5 @@ def generate_marketing_copy(model: m.MarketingRequest) -> m.TextValue:
         "max_output_tokens": 1024,
         "temperature": 0.5,
     }
-    response = llm.predict(
-        prompt,
-        **llm_parameters
-    )
+    response = llm.predict(prompt, **llm_parameters)
     return m.TextValue(text=response.text)

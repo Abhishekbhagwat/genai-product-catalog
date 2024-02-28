@@ -16,29 +16,30 @@ import unittest
 import logging
 
 from google.cloud.ml.applied.marketing import marketing
-from google.cloud.ml.applied.model.domain_model import MarketingRequest, \
-    TextValue, AttributeValue
+from google.cloud.ml.applied.model.domain_model import (
+    MarketingRequest,
+    TextValue,
+    AttributeValue,
+)
 
 logging.basicConfig(level=logging.INFO)
 
 
 class MarketingTest(unittest.TestCase):
-
     def test_generate_marketing_copy(self):
         desc = "Men’s Hooded Puffer Jacket"
         attributes = [
-            AttributeValue(attribute_name='color', attribute_value='green'),
-            AttributeValue(attribute_name='pattern', attribute_value='striped'),
-            AttributeValue(attribute_name='material', attribute_value='down'),
+            AttributeValue(attribute_name="color", attribute_value="green"),
+            AttributeValue(attribute_name="pattern", attribute_value="striped"),
+            AttributeValue(attribute_name="material", attribute_value="down"),
         ]
 
-        req = MarketingRequest(description=desc,
-                               attributes=attributes)
+        req = MarketingRequest(description=desc, attributes=attributes)
 
         res = marketing.generate_marketing_copy(req)
         self.assertIsInstance(res, TextValue)
         logging.info(res)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

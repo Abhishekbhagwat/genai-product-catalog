@@ -13,8 +13,6 @@
 # limitations under the License.
 
 import argparse
-import os
-
 from concurrent import futures
 from google.cloud import pubsub_v1
 from typing import Callable
@@ -22,7 +20,8 @@ import pandas as pd
 from model import FILE_COLUMNS
 import json
 
-def read_csv(file_path:str) -> list[str]:
+
+def read_csv(file_path: str) -> list[str]:
     # header = ""
     # lines = []
 
@@ -30,40 +29,41 @@ def read_csv(file_path:str) -> list[str]:
     #     all_lines = f.readlines()
     #     header = all_lines[0]
     #     lines = all_lines[1:]
-    
+
     # # messages = [f"{header}{line}" for line in lines]
     # messages = list(set(lines))
     # print(len(messages))
 
     data = pd.read_csv(file_path, dtype=FILE_COLUMNS)
-    data = data.drop_duplicates(subset=['product_name'])
-    data = data.drop_duplicates(subset=['pid'])
+    data = data.drop_duplicates(subset=["product_name"])
+    data = data.drop_duplicates(subset=["pid"])
 
-    messages = data.to_dict('records')
+    messages = data.to_dict("records")
     print(len(messages))
     return messages
 
+
 def get_callback(
-        publish_future: pubsub_v1.publisher.futures.Future, data: str
-    ) -> Callable[[pubsub_v1.publisher.futures.Future], None]:
-        def callback(publish_future: pubsub_v1.publisher.futures.Future) -> None:
-            try:
-                print(publish_future.result(timeout=60))
-            except futures.TimeoutError:
-                print(f"Publishing {data} timed out.")
+    publish_future: pubsub_v1.publisher.futures.Future, data: str
+) -> Callable[[pubsub_v1.publisher.futures.Future], None]:
+    def callback(publish_future: pubsub_v1.publisher.futures.Future) -> None:
+        try:
+            print(publish_future.result(timeout=60))
+        except futures.TimeoutError:
+            print(f"Publishing {data} timed out.")
 
-        return callback
+    return callback
 
-def publish_message(messages:list[str], project_id:str, topic_id:str) -> None:
+
+def publish_message(messages: list[str], project_id: str, topic_id: str) -> None:
     """Publishes multiple messages to a Pub/Sub topic with an error handler."""
-
 
     publisher = pubsub_v1.PublisherClient()
     topic_path = publisher.topic_path(project_id, topic_id)
     publish_futures = []
 
     for data in messages:
-        publish_future = publisher.publish(topic_path, json.dumps(data).encode('utf-8'))
+        publish_future = publisher.publish(topic_path, json.dumps(data).encode("utf-8"))
         publish_future.add_done_callback(get_callback(publish_future, data))
         publish_futures.append(publish_future)
 
@@ -73,7 +73,7 @@ def publish_message(messages:list[str], project_id:str, topic_id:str) -> None:
     print(f"Published messages with error handler to {topic_path}.")
 
 
-def run(project_id:str, topic_id:str, csv_path:str):
+def run(project_id: str, topic_id: str, csv_path: str):
     messages = read_csv(file_path=csv_path)
 
     publish_message(messages=messages, project_id=project_id, topic_id=topic_id)
@@ -87,12 +87,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    project_id = args.project # "customermod-genai-sa"
-    topic_id = args.topic # "rdm-topic"
-    csv_path = args.csv_path # ""
+    project_id = args.project  # "customermod-genai-sa"
+    topic_id = args.topic  # "rdm-topic"
+    csv_path = args.csv_path  # ""
 
-    run(
-        project_id=project_id,
-        topic_id=topic_id,
-        csv_path=csv_path
-    )
+    run(project_id=project_id, topic_id=topic_id, csv_path=csv_path)

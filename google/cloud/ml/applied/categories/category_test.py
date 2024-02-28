@@ -33,10 +33,10 @@ class CategoryTest(unittest.TestCase):
     def setUp(self):
         test = Config.SECTION_TEST
         vectors = Config.SECTION_VECTORS
-        self.testProductId = Config.value(test, 'product_id')
-        self.numberOfNeighbors = Config.value(vectors, 'number_of_neighbors')
-        self.testImage = Config.value(test, 'gcs_image')
-        self.testCategory = Config.value(test, 'category')
+        self.testProductId = Config.value(test, "product_id")
+        self.numberOfNeighbors = Config.value(vectors, "number_of_neighbors")
+        self.testImage = Config.value(test, "gcs_image")
+        self.testCategory = Config.value(test, "category")
 
     def test_join_categories(self):
         res = category.join_categories([self.testProductId])
@@ -46,38 +46,27 @@ class CategoryTest(unittest.TestCase):
         self.assertIsInstance(res[self.testProductId][0], str)
 
     def test_retrieve(self):
-        res = category.retrieve(
-            'This is a test description',
-            self.testImage
-        )
+        res = category.retrieve("This is a test description", self.testImage)
         logging.info(res)
         self.assertIsInstance(res, list)
         self.assertEqual(len(res), self.numberOfNeighbors * 2)
-        self.assertEqual(set(res[0].keys()), {'id', 'category', 'distance'})
+        self.assertEqual(set(res[0].keys()), {"id", "category", "distance"})
 
     def test_rank(self):
-        candidates = [('cat1_a', 'cat2_a'), ('cat1_b', 'cat2_b')]
-        res = category.rank(
-            'This is a test description',
-            candidates
-        )
+        candidates = [("cat1_a", "cat2_a"), ("cat1_b", "cat2_b")]
+        res = category.rank("This is a test description", candidates)
         logging.info(res)
         self.assertEqual(sorted(candidates), sorted(res))
 
     def test_retrieve_and_rank(self):
-        res = category.retrieve_and_rank(
-            'This is a test description',
-            self.testImage
-        )
+        res = category.retrieve_and_rank("This is a test description", self.testImage)
         logging.info(res)
         self.assertIsInstance(res, m.CategoryList)
         self.assertGreater(len(res.values), 0)
 
     def test_retrieve_and_rank_with_filter(self):
         res = category.retrieve_and_rank(
-            'This is a test description',
-            self.testImage,
-            filters=[self.testCategory]
+            "This is a test description", self.testImage, filters=[self.testCategory]
         )
         logging.info(res)
         self.assertIsInstance(res, m.CategoryList)
@@ -85,14 +74,12 @@ class CategoryTest(unittest.TestCase):
 
     def test_retrieve_and_rank_with_bad_filter(self):
         res = category.retrieve_and_rank(
-            'This is a test description',
-            self.testImage,
-            filters=['XYZunknowncategory']
+            "This is a test description", self.testImage, filters=["XYZunknowncategory"]
         )
         logging.info(res)
         self.assertIsInstance(res, list)
         self.assertGreater(len(res), 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

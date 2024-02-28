@@ -43,54 +43,54 @@ with io.open(readme_filename, encoding="utf-8") as readme_file:
 url = "https://github.com/"
 
 packages = [
-  package
-  for package in setuptools.find_namespace_packages()
-  if package.startswith("google")
+    package
+    for package in setuptools.find_namespace_packages()
+    if package.startswith("google")
 ]
 
 dependencies = [
-  "requests>=2.31.0",
-  "scipy>=1.11.4",
-  "numpy>=1.26.3",
-  "mediapipe>==0.10.9",
-  "pandas>=2.1.4",
-  "en_core_web_sm@https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.4.0/en_core_web_sm-3.4.0-py3-none-any.whl"
-  "spacy>=3.4.4",
-  "spacy-cleaner>=3.1.0",
-  "json-pickle>=3.0.2",
-  "google-api-python-client>=2.113.0",
-  "google-cloud-aiplatform>=1.39.0",
-  "google-cloud-storage>=2.14.0",
-  "google-cloud-bigquery>=3.15.0",
-  "gcloud>=0.18.3",
-  "grpclib==0.4.7",
-  "grpcio==1.60.0",
-  "fastapi>=0.108.0",
-  "uvicorn>=0.25.0",
+    "requests>=2.31.0",
+    "scipy>=1.11.4",
+    "numpy>=1.26.3",
+    "mediapipe>==0.10.9",
+    "pandas>=2.1.4",
+    "en_core_web_sm@https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.4.0/en_core_web_sm-3.4.0-py3-none-any.whl"
+    "spacy>=3.4.4",
+    "spacy-cleaner>=3.1.0",
+    "json-pickle>=3.0.2",
+    "google-api-python-client>=2.113.0",
+    "google-cloud-aiplatform>=1.39.0",
+    "google-cloud-storage>=2.14.0",
+    "google-cloud-bigquery>=3.15.0",
+    "gcloud>=0.18.3",
+    "grpclib==0.4.7",
+    "grpcio==1.60.0",
+    "fastapi>=0.108.0",
+    "uvicorn>=0.25.0",
 ]
 
 setuptools.setup(
-  name=name,
-  version=version,
-  description=description,
-  long_description=readme,
-  author="Google LLC",
-  author_email="googleapis-packages@google.com",
-  license="Apache 2.0",
-  url=url,
-  classifiers=[
-    release_status,
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Operating System :: OS Independent",
-    "Topic :: Internet",
-  ],
-  platforms="Posix; MacOS X; Windows",
-  packages=packages,
-  python_requires=">=3.7",
-  install_requires=dependencies,
-  include_package_data=True,
-  zip_safe=False,
+    name=name,
+    version=version,
+    description=description,
+    long_description=readme,
+    author="Google LLC",
+    author_email="googleapis-packages@google.com",
+    license="Apache 2.0",
+    url=url,
+    classifiers=[
+        release_status,
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Operating System :: OS Independent",
+        "Topic :: Internet",
+    ],
+    platforms="Posix; MacOS X; Windows",
+    packages=packages,
+    python_requires=">=3.7",
+    install_requires=dependencies,
+    include_package_data=True,
+    zip_safe=False,
 )

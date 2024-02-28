@@ -42,10 +42,10 @@ def join_attributes_desc(ids: list[str]) -> dict[str:dict]:
             description: e.g. 'This is a description'
     """
     bq = Config.SECTION_BIG_QUERY
-    table_name = Config.value(bq, 'product_table')
-    column_id = Config.value(bq, 'product_id_column')
-    column_attributes = Config.value(bq, 'product_attributes_column')
-    column_description = Config.value(bq, 'product_description_column')
+    table_name = Config.value(bq, "product_table")
+    column_id = Config.value(bq, "product_id_column")
+    column_attributes = Config.value(bq, "product_attributes_column")
+    column_description = Config.value(bq, "product_description_column")
 
     query = f"""
     SELECT
@@ -65,24 +65,25 @@ def join_attributes_desc(ids: list[str]) -> dict[str:dict]:
         logging.info(row)
         if isinstance(row[column_attributes], str):
             attributes[id_value] = {
-                'attributes': json.loads(row[column_attributes]),
-                'description': row[column_description]
+                "attributes": json.loads(row[column_attributes]),
+                "description": row[column_description],
             }
         else:
             attributes[id_value] = {
-                'attributes': {},
-                'description': row[column_description]
+                "attributes": {},
+                "description": row[column_description],
             }
 
     return attributes
 
 
 def retrieve(
-        desc: str,
-        category: Optional[str] = None,
-        image: Optional[str] = None,
-        base64: bool = False,
-        filters: list[str] = []) -> list[dict]:
+    desc: str,
+    category: Optional[str] = None,
+    image: Optional[str] = None,
+    base64: bool = False,
+    filters: list[str] = [],
+) -> list[dict]:
     """Returns list of attributes based on nearest neighbors.
 
     Embeds the provided desc and (optionally) image and returns the attributes
@@ -105,21 +106,26 @@ def retrieve(
             distance: embedding distance in range [0,1], 0 being the closest match
     """
     res = embeddings.embed(desc, image, base64)
-    embeds = [res.text_embedding,
-              res.image_embedding] if res.image_embedding else [
-        res.text_embedding]
+    embeds = (
+        [res.text_embedding, res.image_embedding]
+        if res.image_embedding
+        else [res.text_embedding]
+    )
     neighbors = nearest_neighbors.get_nn(embeds, filters)
     if not neighbors:
         return []
-    ids = [n.id[:-2] for n in
-           neighbors]  # last 3 chars are not part of product ID
+    ids = [n.id[:-2] for n in neighbors]  # last 3 chars are not part of product ID
     attributes_desc = join_attributes_desc(ids)
     candidates = [
-        {'attributes': attributes_desc[n.id[:-2]]['attributes'],
-         'description': attributes_desc[n.id[:-2]]['description'],
-         'id': n.id,
-         'distance': n.distance} for n in neighbors]
-    return sorted(candidates, key=lambda d: d['distance'])
+        {
+            "attributes": attributes_desc[n.id[:-2]]["attributes"],
+            "description": attributes_desc[n.id[:-2]]["description"],
+            "id": n.id,
+            "distance": n.distance,
+        }
+        for n in neighbors
+    ]
+    return sorted(candidates, key=lambda d: d["distance"])
 
 
 def generate_prompt(desc: str, candidates: list[dict]) -> str:
@@ -133,11 +139,14 @@ def generate_prompt(desc: str, candidates: list[dict]) -> str:
 
     Returns: prompt to feed to LLM
     """
-    examples = ''
+    examples = ""
     for candidate in candidates:
-        examples += 'Description: ' + candidate['description'] + '\n'
-        examples += 'Attributes:\n' + '|'.join(
-            [k + ':' + v for k, v in candidate['attributes'].items()]) + '\n\n'
+        examples += "Description: " + candidate["description"] + "\n"
+        examples += (
+            "Attributes:\n"
+            + "|".join([k + ":" + v for k, v in candidate["attributes"].items()])
+            + "\n\n"
+        )
 
     prompt = f"""
 Here are examples of Product Descriptions followed by Attributes:
@@ -165,16 +174,13 @@ def parse_answer(ans: str) -> dict[str, str]:
         ans as a dictionary
     """
     d = {}
-    for a in ans.split('|'):
-        k, v = a.split(':')
+    for a in ans.split("|"):
+        k, v = a.split(":")
         d[k.strip()] = v.strip()
     return d
 
 
-def generate_attributes(
-        desc: str,
-        candidates: list[dict]
-) -> m.AttributeValue:
+def generate_attributes(desc: str, candidates: list[dict]) -> m.AttributeValue:
     """Use an LLM to determine attributes given nearest neighbor candidates
 
     Args:
@@ -191,28 +197,26 @@ def generate_attributes(
         "max_output_tokens": 256,
         "temperature": 0.0,
     }
-    response = llm.predict(
-        prompt,
-        **llm_parameters
-    )
+    response = llm.predict(prompt, **llm_parameters)
     res = response.text
     if not res:
         raise ValueError(
-            'ERROR: No LLM response returned. This seems to be an intermittent bug')
+            "ERROR: No LLM response returned. This seems to be an intermittent bug"
+        )
     try:
         formatted_res = parse_answer(res)
     except Exception as e:
         logging.error(e)
-        raise ValueError(f'LLM Response: {res} is not in the expected format')
+        raise ValueError(f"LLM Response: {res} is not in the expected format")
     return m.dict_to_attribute_values(formatted_res)
 
 
 def retrieve_and_generate_attributes(
-        desc: str,
-        category: Optional[str] = None,
-        image: Optional[str] = None,
-        base64: bool = False,
-        filters: list[str] = []
+    desc: str,
+    category: Optional[str] = None,
+    image: Optional[str] = None,
+    base64: bool = False,
+    filters: list[str] = [],
 ) -> m.ProductAttributes:
     """RAG approach to generating product attributes.
 
@@ -233,10 +237,12 @@ def retrieve_and_generate_attributes(
     """
     candidates = retrieve(desc, category, image, base64, filters)
     if filters and not candidates:
-        return {'error': 'ERROR: no existing products match that category'}
+        return {"error": "ERROR: no existing products match that category"}
     try:
-        return m.ProductAttributes(product_attributes=generate_attributes(desc, candidates))
+        return m.ProductAttributes(
+            product_attributes=generate_attributes(desc, candidates)
+        )
     except ValueError as e:
         logging.error(e)
-        logging.error('Falling back to greedy approach')
-        return m.ProductAttributes(product_attributes=candidates[0]['attributes'])
+        logging.error("Falling back to greedy approach")
+        return m.ProductAttributes(product_attributes=candidates[0]["attributes"])

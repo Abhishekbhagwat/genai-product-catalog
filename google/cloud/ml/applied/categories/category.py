@@ -27,18 +27,17 @@ from google.cloud.ml.applied.config import Config
 bq_client = utils.get_bq_client()
 llm = utils.get_llm()
 
-category_depth = Config.value(Config.SECTION_CATEGORY, 'depth')
-allow_trailing_nulls = Config.value(key='allow_trailing_spaces')
-number_of_neighbors = Config.value(Config.SECTION_VECTORS,
-                                      'number_of_neighbors')
+category_depth = Config.value(Config.SECTION_CATEGORY, "depth")
+allow_trailing_nulls = Config.value(key="allow_trailing_spaces")
+number_of_neighbors = Config.value(Config.SECTION_VECTORS, "number_of_neighbors")
 
 bq = Config.SECTION_BIG_QUERY
-table_product = Config.value(bq, 'product_table')
-column_id = Config.value(bq, 'product_id_column')
-column_categories = Config.value(bq, 'product_category_column_list')
+table_product = Config.value(bq, "product_table")
+column_id = Config.value(bq, "product_id_column")
+column_categories = Config.value(bq, "product_category_column_list")
 
 
-def join_categories(ids: list[str]) -> dict[str:list[str]]:
+def join_categories(ids: list[str]) -> dict[str : list[str]]:
     """Given list of product IDs, join category names.
 
     Args:
@@ -68,20 +67,23 @@ def join_categories(ids: list[str]) -> dict[str:list[str]]:
                 if allow_trailing_nulls:
                     if col == column_categories[0]:
                         raise ValueError(
-                            f'Top level category {col} for product {row[column_id]} is null')
+                            f"Top level category {col} for product {row[column_id]} is null"
+                        )
                     else:
                         break  # return existing categories
                 else:
                     raise ValueError(
-                        f'Column {col} for product {row[column_id]} is null. To allow nulls update app.toml')
+                        f"Column {col} for product {row[column_id]} is null. To allow nulls update app.toml"
+                    )
     return categories
 
 
 def retrieve(
-        desc: str,
-        image: Optional[str] = None,
-        base64: bool = False,
-        filters: list[str] = []) -> list[dict]:
+    desc: str,
+    image: Optional[str] = None,
+    base64: bool = False,
+    filters: list[str] = [],
+) -> list[dict]:
     """Returns list of categories based on nearest neighbors.
 
     This is a 'greedy' retrieval approach that embeds the provided desc and
@@ -103,24 +105,26 @@ def retrieve(
             distance: embedding distance in range [0,1], 0 being the closest match
     """
     res = embeddings.embed(desc, image, base64)
-    embeds = [res.text_embedding,
-              res.image_embedding] if res.image_embedding else [
-        res.text_embedding]
+    embeds = (
+        [res.text_embedding, res.image_embedding]
+        if res.image_embedding
+        else [res.text_embedding]
+    )
     neighbors = nearest_neighbors.get_nn(embeds, filters)
     if not neighbors:
         return []
-    ids = [n.id[:-2] for n in
-           neighbors]  # last 3 chars are not part of product ID
+    ids = [n.id[:-2] for n in neighbors]  # last 3 chars are not part of product ID
     categories = join_categories(ids)
     candidates = [
-        {'category': categories[n.id[:-2]], 'id': n.id, 'distance': n.distance}
-        for n in neighbors]
-    return sorted(candidates, key=lambda d: d['distance'])
+        {"category": categories[n.id[:-2]], "id": n.id, "distance": n.distance}
+        for n in neighbors
+    ]
+    return sorted(candidates, key=lambda d: d["distance"])
 
 
 def _rank(desc: str, candidates: list[list[str]]) -> list[list[str]]:
     """See rank() for docstring."""
-    logging.info(f'Candidates:\n{candidates}')
+    logging.info(f"Candidates:\n{candidates}")
     if not candidates:
         return []
 
@@ -139,25 +143,25 @@ def _rank(desc: str, candidates: list[list[str]]) -> list[list[str]]:
         "max_output_tokens": 256,
         "temperature": 0.0,
     }
-    response = llm.predict(
-        query,
-        **llm_parameters
-    )
+    response = llm.predict(query, **llm_parameters)
     res = response.text.splitlines()
     if not res:
         raise ValueError(
-            'ERROR: No LLM response returned. This seems to be an intermittent bug')
+            "ERROR: No LLM response returned. This seems to be an intermittent bug"
+        )
 
-    logging.info(f'Response:\n{res}')
-    formatted_res = [re.sub(r"^\s*(\d+\.|\*|-)\s+", "", line.strip()).split('->')
-                     for line in res]
-    formatted_res = [res for res in formatted_res if len(res) == len(
-        candidates[0])]  # remove answers that don't match expected length
+    logging.info(f"Response:\n{res}")
+    formatted_res = [
+        re.sub(r"^\s*(\d+\.|\*|-)\s+", "", line.strip()).split("->") for line in res
+    ]
+    formatted_res = [
+        res for res in formatted_res if len(res) == len(candidates[0])
+    ]  # remove answers that don't match expected length
 
-    unique_res = list(dict.fromkeys([tuple(l) for l in formatted_res]))
-    logging.info(f'Formatted Response:\n {unique_res}')
+    unique_res = list(dict.fromkeys([tuple(item) for item in formatted_res]))
+    logging.info(f"Formatted Response:\n {unique_res}")
     if not unique_res:
-        raise ValueError('ERROR: No responses returned in expected format')
+        raise ValueError("ERROR: No responses returned in expected format")
     return unique_res
 
 
@@ -177,15 +181,16 @@ def rank(desc: str, candidates: list[list[str]]) -> list[list[str]]:
         return _rank(desc, candidates)
     except ValueError as e:
         logging.error(e)
-        logging.error('Falling back to original candidate ranking.')
-        return list(dict.fromkeys([tuple(l) for l in candidates]))
+        logging.error("Falling back to original candidate ranking.")
+        return list(dict.fromkeys([tuple(list_item) for list_item in candidates]))
 
 
 def retrieve_and_rank(
-        desc: str,
-        image: Optional[str] = None,
-        base64: bool = False,
-        filters: list[str] = []) -> m.CategoryList:
+    desc: str,
+    image: Optional[str] = None,
+    base64: bool = False,
+    filters: list[str] = [],
+) -> m.CategoryList:
     """Wrapper function to sequence retrieve and rank functions.
 
     Args:
@@ -202,8 +207,8 @@ def retrieve_and_rank(
     """
     candidates = retrieve(desc, image, base64, filters)
     if filters and not candidates:
-        return [['ERROR: No existing products match that category']]
+        return [["ERROR: No existing products match that category"]]
 
-    return m.CategoryList(values=rank(desc,
-                                      [candidate['category'] for
-                                       candidate in candidates]))
+    return m.CategoryList(
+        values=rank(desc, [candidate["category"] for candidate in candidates])
+    )

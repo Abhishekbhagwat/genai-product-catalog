@@ -1,18 +1,29 @@
-import apache_beam as beam
+#  Copyright 2023 Google LLC
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import argparse
-import pandas as pd
-import jsonpickle
 import json
 import logging
-import requests
-import vertexai
-
-from apache_beam.options.pipeline_options import PipelineOptions
-
-from google.cloud import bigquery, storage
-from models.model import parse_row, FILE_COLUMNS
 from typing import Optional
 
+import apache_beam as beam
+import jsonpickle
+import pandas as pd
+import requests
+import vertexai
+from apache_beam.options.pipeline_options import PipelineOptions
+from models.model import FILE_COLUMNS, parse_row
 from vertexai.vision_models import (
     Image,
     MultiModalEmbeddingModel,
@@ -20,6 +31,7 @@ from vertexai.vision_models import (
 )
 
 import google.cloud.logging
+from google.cloud import bigquery, storage
 
 
 def get_multimodal_embeddings(
@@ -166,6 +178,7 @@ class AggregateToList(beam.CombineFn):
     def extract_output(self, accumulator):
         return accumulator
 
+
 class WriteJsonToBigQuery(beam.DoFn):
     def __init__(self, project_id: str, bq_table_id: str):
         self.project_id = project_id
@@ -213,10 +226,12 @@ class WriteToGCS(beam.DoFn):
         blob = bucket.blob(self.file_name)
         blob.upload_from_string(f"{element}")
 
+
 class ConvertStringToDict(beam.DoFn):
     def process(self, element):
         dict_data = json.loads(element)
         yield dict_data
+
 
 def run(argv=None, save_main_session=True):
     """Main entry point; defines and runs the wordcount pipeline."""
@@ -274,13 +289,14 @@ def run(argv=None, save_main_session=True):
 
         raw_data = (
             p
-            | "Read Pub/Sub" >> beam.io.gcp.pubsub.ReadStringsFromPubSub(subscription=subscription_id)
+            | "Read Pub/Sub"
+            >> beam.io.gcp.pubsub.ReadStringsFromPubSub(subscription=subscription_id)
             | "Convert Message to Row" >> beam.ParDo(ConvertStringToDict())
         )
 
         raw_data | "print row" >> beam.Map(print)
-        
-        # skipping RDM transform and 
+
+        # skipping RDM transform and
         parsed_data = (
             raw_data
             | "Parse Row" >> beam.ParDo(ParseRow())
@@ -303,7 +319,7 @@ def run(argv=None, save_main_session=True):
         success_downloads, failed_downloads = processed_data
 
         # # Call Embedding API on successfully downloaded images
-        embedding_results = (
+        embedding_results = (  # noqa: F841
             success_downloads
             | "Extract Success Downloads"
             >> beam.Map(lambda x: x[1])  # Extract the product object from the tuple

@@ -16,8 +16,6 @@
 """Invoke Vertex Embedding API."""
 
 import logging
-import time
-
 from functools import cache
 from typing import NamedTuple, Optional, Sequence
 
@@ -25,6 +23,7 @@ from google.cloud import aiplatform
 from google.protobuf import struct_pb2
 
 from google.cloud.ml.applied.config import Config
+
 
 class EmbeddingResponse(NamedTuple):
     text_embedding: Sequence[float]
@@ -35,21 +34,25 @@ class EmbeddingPredictionClient:
     """Wrapper around Prediction Service Client."""
 
     def __init__(self):
-        project = Config.value(Config.SECTION_PROJECT, 'id')
-        location = Config.value(Config.SECTION_PROJECT, 'location')
-        api_regional_endpoint = Config.value(Config.SECTION_PROJECT, 'endpoint')
+        project = Config.value(Config.SECTION_PROJECT, "id")
+        location = Config.value(Config.SECTION_PROJECT, "location")
+        api_regional_endpoint = Config.value(Config.SECTION_PROJECT, "endpoint")
 
         client_options = {"api_endpoint": api_regional_endpoint}
         # Initialize client that will be used to create and send requests.
         # This client only needs to be created once, and can be reused for multiple requests.
-        self.client = aiplatform.gapic.PredictionServiceClient(client_options=client_options)
+        self.client = aiplatform.gapic.PredictionServiceClient(
+            client_options=client_options
+        )
         self.location = location
         self.project = project
 
-    def get_embedding(self,
-                      text: Optional[str] = None,
-                      image: Optional[str] = None,
-                      base64: bool = False):
+    def get_embedding(
+        self,
+        text: Optional[str] = None,
+        image: Optional[str] = None,
+        base64: bool = False,
+    ):
         """Invoke Vertex multimodal embedding API.
 
         You can pass text and/or image. If neither is passed will raise exception
@@ -66,49 +69,52 @@ class EmbeddingPredictionClient:
             no image provide
         """
         if not text and not image:
-            raise ValueError('At least one of text or image_bytes must be specified.')
+            raise ValueError("At least one of text or image_bytes must be specified.")
 
         instance = struct_pb2.Struct()
         if text:
             if len(text) >= 1024:
                 logging.warning(
-                    'Text must be less than 1024 characters. Truncating text.')
+                    "Text must be less than 1024 characters. Truncating text."
+                )
                 text = text[:1023]
-            instance.fields['text'].string_value = text
+            instance.fields["text"].string_value = text
 
         if image:
-            image_struct = instance.fields['image'].struct_value
+            image_struct = instance.fields["image"].struct_value
             if base64:
-                image_struct.fields['bytesBase64Encoded'].string_value = image
-            elif image.lower().startswith('gs://'):
-                image_struct.fields['gcsUri'].string_value = image
+                image_struct.fields["bytesBase64Encoded"].string_value = image
+            elif image.lower().startswith("gs://"):
+                image_struct.fields["gcsUri"].string_value = image
             else:
                 with open(image, "rb") as f:
                     image_bytes = f.read()
                 encoded_content = base64.b64encode(image_bytes).decode("utf-8")
-                image_struct.fields['bytesBase64Encoded'].string_value = encoded_content
+                image_struct.fields["bytesBase64Encoded"].string_value = encoded_content
 
         instances = [instance]
 
         # TODO - THIS SHOULD NOT BE HARD CODED
 
-        endpoint = (f"projects/{self.project}/locations/{self.location}"
-                    "/publishers/google/models/multimodalembedding@001")
+        endpoint = (
+            f"projects/{self.project}/locations/{self.location}"
+            "/publishers/google/models/multimodalembedding@001"
+        )
         response = self.client.predict(endpoint=endpoint, instances=instances)
 
         text_embedding = None
         if text:
-            text_emb_value = response.predictions[0]['textEmbedding']
+            text_emb_value = response.predictions[0]["textEmbedding"]
             text_embedding = [v for v in text_emb_value]
 
         image_embedding = None
         if image:
-            image_emb_value = response.predictions[0]['imageEmbedding']
+            image_emb_value = response.predictions[0]["imageEmbedding"]
             image_embedding = [v for v in image_emb_value]
 
         return EmbeddingResponse(
-            text_embedding=text_embedding,
-            image_embedding=image_embedding)
+            text_embedding=text_embedding, image_embedding=image_embedding
+        )
 
 
 @cache
@@ -117,10 +123,11 @@ def get_client(project):
 
 
 def embed(
-        text: str,
-        image: Optional[str] = None,
-        base64: bool = False,
-        project: str = Config.value('project', 'id')) -> EmbeddingResponse:
+    text: str,
+    image: Optional[str] = None,
+    base64: bool = False,
+    project: str = Config.value("project", "id"),
+) -> EmbeddingResponse:
     """Invoke vertex multimodal embedding API.
 
     Args:

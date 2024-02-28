@@ -18,27 +18,30 @@ import logging
 from collections import namedtuple
 
 from google.cloud import aiplatform
-from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import Namespace
+from google.cloud.aiplatform.matching_engine.matching_engine_index_endpoint import (
+    Namespace,
+)
 
 from google.cloud.ml.applied.config import Config
 
-Neighbor = namedtuple('Neighbor', ['id', 'distance'])
+Neighbor = namedtuple("Neighbor", ["id", "distance"])
 index_endpoint = aiplatform.MatchingEngineIndexEndpoint(
-    index_endpoint_name=Config.value(Config.SECTION_VECTORS, 'endpoint_id'),
-    project=Config.value(Config.SECTION_PROJECT, 'id'),
-    location=Config.value(Config.SECTION_PROJECT, 'location')
+    index_endpoint_name=Config.value(Config.SECTION_VECTORS, "endpoint_id"),
+    project=Config.value(Config.SECTION_PROJECT, "id"),
+    location=Config.value(Config.SECTION_PROJECT, "location"),
 )
 
-deployed_index = Config.value(Config.SECTION_VECTORS, 'deployed_index')
-number_of_neighbors = Config.value(Config.SECTION_VECTORS, 'number_of_neighbors')
-category_depth = Config.value(Config.SECTION_CATEGORY, 'depth')
-category_filter = Config.value(Config.SECTION_CATEGORY, 'filter')
+deployed_index = Config.value(Config.SECTION_VECTORS, "deployed_index")
+number_of_neighbors = Config.value(Config.SECTION_VECTORS, "number_of_neighbors")
+category_depth = Config.value(Config.SECTION_CATEGORY, "depth")
+category_filter = Config.value(Config.SECTION_CATEGORY, "filter")
 
 
 def get_nn(
-        embeds: list[list[float]],
-        filters: list[str] = [],
-        num_neighbors: int = number_of_neighbors) -> list[Neighbor]:
+    embeds: list[list[float]],
+    filters: list[str] = [],
+    num_neighbors: int = number_of_neighbors,
+) -> list[Neighbor]:
     """Fetch nearest neighbors in vector store.
 
     Neighbors are fetched independently for each embedding then unioned.
@@ -59,19 +62,19 @@ def get_nn(
             distance: the embedding distance
     """
     if len(filters) > category_depth:
-        logging.warning(f'''Number of category filters {len(filters)} is greater
-         than supported category depth {category_depth}. Truncating''')
+        logging.warning(
+            f"""Number of category filters {len(filters)} is greater
+         than supported category depth {category_depth}. Truncating"""
+        )
         filters = filters[:category_depth]
 
-    filters = [Namespace(category_filter[i], [f]) for i, f in
-               enumerate(filters)]
+    filters = [Namespace(category_filter[i], [f]) for i, f in enumerate(filters)]
 
     response = index_endpoint.find_neighbors(
         deployed_index_id=deployed_index,
         queries=embeds,
         num_neighbors=num_neighbors,
-        filter=filters
+        filter=filters,
     )
 
-    return [Neighbor(r.id, r.distance) for neighbor
-            in response for r in neighbor]
+    return [Neighbor(r.id, r.distance) for neighbor in response for r in neighbor]

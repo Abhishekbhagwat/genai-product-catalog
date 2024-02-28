@@ -20,32 +20,32 @@ from functools import cache
 from typing import Any
 from google.cloud import aiplatform_v1
 from google.cloud import bigquery
-from vertexai.preview.generative_models import (GenerativeModel)
+from vertexai.preview.generative_models import GenerativeModel
 from google.cloud.ml.applied.config import Config
 
 conf = Config()
 
+
 @cache
-def get_bq_client(project=conf.value(Config.SECTION_PROJECT, 'id')):
+def get_bq_client(project=conf.value(Config.SECTION_PROJECT, "id")):
     return bigquery.Client(project)
 
 
 @cache
 def get_llm():
-    vertexai.init(project=conf.value(Config.SECTION_PROJECT, 'id'),
-                  location=conf.value(Config.SECTION_PROJECT, 'location'))
+    vertexai.init(
+        project=conf.value(Config.SECTION_PROJECT, "id"),
+        location=conf.value(Config.SECTION_PROJECT, "location"),
+    )
 
-    return (vertexai.
-            language_models.
-            TextGenerationModel.
-            from_pretrained(conf.value(Config.SECTION_MODELS, 'llm')))
+    return vertexai.language_models.TextGenerationModel.from_pretrained(
+        conf.value(Config.SECTION_MODELS, "llm")
+    )
 
 
 @cache
 def get_gemini_pro_vision() -> Any:
-    multimodal_model = (
-        GenerativeModel(
-          conf.value(Config.SECTION_MODELS, 'gemini')))
+    multimodal_model = GenerativeModel(conf.value(Config.SECTION_MODELS, "gemini"))
 
     return multimodal_model
 
@@ -53,8 +53,6 @@ def get_gemini_pro_vision() -> Any:
 @cache
 def get_vector_search_index_client():
     index_client = aiplatform_v1.IndexServiceClient(
-        client_options=dict(api_endpoint=conf.value(Config.SECTION_PROJECT, 'endpoint')))
+        client_options=dict(api_endpoint=conf.value(Config.SECTION_PROJECT, "endpoint"))
+    )
     return index_client
-
-
-

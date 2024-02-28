@@ -29,17 +29,15 @@ logging.basicConfig(level=logging.INFO)
 
 class AttributesTest(unittest.TestCase):
     def setUp(self):
-
         test = Config.SECTION_TEST
         vectors = Config.SECTION_VECTORS
-        self.testProductId = Config.value(test, 'product_id')
+        self.testProductId = Config.value(test, "product_id")
 
-        self.numberOfNeighbors = int(Config.value(vectors,
-                                                  'number_of_neighbors'))
+        self.numberOfNeighbors = int(Config.value(vectors, "number_of_neighbors"))
 
-        self.testImage = Config.value(test, 'gcs_image')
+        self.testImage = Config.value(test, "gcs_image")
 
-        self.testCategory = Config.value(test, 'category')
+        self.testCategory = Config.value(test, "category")
 
     def test_join_attributes_desc(self):
         res = attributes.join_attributes_desc([self.testProductId])
@@ -48,16 +46,18 @@ class AttributesTest(unittest.TestCase):
         for k, v in res.items():
             self.assertIsInstance(k, str)
             self.assertIsInstance(v, dict)
-            self.assertEqual(set(v.keys()), {'attributes', 'description'})
-        logging.info(res[self.testProductId]['attributes'])
-        logging.info(res[self.testProductId]['description'])
+            self.assertEqual(set(v.keys()), {"attributes", "description"})
+        logging.info(res[self.testProductId]["attributes"])
+        logging.info(res[self.testProductId]["description"])
 
     def test_generate_prompt(self):
-        desc = 'This is an orange'
+        desc = "This is an orange"
         candidates = [
-            {'description': 'Apple',
-             'attributes': {'Color': 'green', 'Taste': 'sweet'}},
-            {'description': 'Banana', 'attributes': {'Color': 'yellow'}},
+            {
+                "description": "Apple",
+                "attributes": {"Color": "green", "Taste": "sweet"},
+            },
+            {"description": "Banana", "attributes": {"Color": "yellow"}},
         ]
         res = attributes.generate_prompt(desc, candidates)
         logging.info(res)
@@ -65,36 +65,34 @@ class AttributesTest(unittest.TestCase):
 
     def test_retrieve_no_category(self):
         res = attributes.retrieve(
-            desc='This is a test description',
-            image=self.testImage
+            desc="This is a test description", image=self.testImage
         )
         logging.info(res)
         self.assertIsInstance(res, list)
         self.assertEqual(len(res), self.numberOfNeighbors * 2)
-        self.assertEqual(set(res[0].keys()),
-                         {'id', 'attributes', 'description', 'distance'})
+        self.assertEqual(
+            set(res[0].keys()), {"id", "attributes", "description", "distance"}
+        )
 
     def test_generate_attributes_no_category(self):
         candidates = [
-            {'description': 'Apple',
-             'attributes': {'Color': 'green', 'Taste': 'sweet'}},
-            {'description': 'Banana', 'attributes': {'Color': 'yellow'}},
+            {
+                "description": "Apple",
+                "attributes": {"Color": "green", "Taste": "sweet"},
+            },
+            {"description": "Banana", "attributes": {"Color": "yellow"}},
         ]
-        res = attributes.generate_attributes(
-            'Orange',
-            candidates
-        )
+        res = attributes.generate_attributes("Orange", candidates)
         logging.info(res)
         self.assertGreater(len(res), 0)
 
     def test_parse_answer(self):
-        res = attributes.parse_answer(' color: deep red |size:large')
-        self.assertDictEqual(res, {'color': 'deep red', 'size': 'large'})
+        res = attributes.parse_answer(" color: deep red |size:large")
+        self.assertDictEqual(res, {"color": "deep red", "size": "large"})
 
     def test_retrieve_and_generate_attributes(self):
         res = attributes.retrieve_and_generate_attributes(
-            desc='Fleece Jacket',
-            image=self.testImage
+            desc="Fleece Jacket", image=self.testImage
         )
         logging.info(res)
         self.assertIsInstance(res, dict)
@@ -102,7 +100,7 @@ class AttributesTest(unittest.TestCase):
 
     def test_retrieve_and_generate_attributes_with_filter(self):
         res = attributes.retrieve_and_generate_attributes(
-            desc='Fleece Jacket',
+            desc="Fleece Jacket",
             image=self.testImage,
             filters=[self.testCategory],
         )
@@ -112,14 +110,14 @@ class AttributesTest(unittest.TestCase):
 
     def test_retrieve_and_generate_attributes_with_bad_filter(self):
         res = attributes.retrieve_and_generate_attributes(
-            desc='Fleece Jacket',
+            desc="Fleece Jacket",
             image=self.testImage,
-            filters=['XYZunknowncategory'],
+            filters=["XYZunknowncategory"],
         )
         logging.info(res)
         self.assertIsInstance(res, dict)
         self.assertGreater(len(res), 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

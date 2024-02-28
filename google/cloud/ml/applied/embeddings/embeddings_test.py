@@ -31,10 +31,9 @@ from google.cloud.ml.applied.config import Config
 
 
 class EmbeddingsTest(unittest.TestCase):
-
     def test_embeddings_api(self):
         res = embeddings.embed(
-            'This is a test description',
+            "This is a test description",
         )
         self.assertEqual(len(res.text_embedding), 1408)
         self.assertIsNone(res.image_embedding)
@@ -61,22 +60,20 @@ class EmbeddingsTest(unittest.TestCase):
 
     def test_embeddings_api_with_image(self):
         res = embeddings.embed(
-            'This is a test description',
-            Config.value(Config.SECTION_TEST, 'gcs_image'),
+            "This is a test description",
+            Config.value(Config.SECTION_TEST, "gcs_image"),
         )
         self.assertEqual(len(res.text_embedding), 1408)
         self.assertEqual(len(res.image_embedding), 1408)
 
     def test_embeddings_api_with_image_base64(self):
-        image_base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
+        image_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
         res = embeddings.embed(
-            text='This is a test description',
-            image=image_base64,
-            base64=True
+            text="This is a test description", image=image_base64, base64=True
         )
         self.assertEqual(len(res.text_embedding), 1408)
         self.assertEqual(len(res.image_embedding), 1408)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -101,7 +101,8 @@ class DownloadImage(beam.DoFn):
                 bucket = client.bucket(self.bucket_name)
                 blob = bucket.blob(blob_name)
                 blob.upload_from_string(response.content, content_type="image/jpeg")
-                gcs_url = f"gs://{self.bucket_name}/{blob_name}"
+                print("upload done")
+                gcs_url = f"gs:///{self.bucket_name}/{blob_name}"
                 product.headers[0].images[0].url = gcs_url
                 print(gcs_url)
                 yield "success", product
@@ -214,6 +215,10 @@ class WriteToGCS(beam.DoFn):
         blob = bucket.blob(self.file_name)
         blob.upload_from_string(f"{element}")
 
+class ConvertStringToDict(beam.DoFn):
+    def process(self, element):
+        dict_data = json.loads(element)
+        yield dict_data
 
 def run(argv=None, save_main_session=True):
     """Main entry point; defines and runs the wordcount pipeline."""
@@ -271,11 +276,13 @@ def run(argv=None, save_main_session=True):
 
         raw_data = (
             p
-            | "Read Pub/Sub"
-            >> beam.io.gcp.pubsub.ReadStringsFromPubSub(subscription=subscription_id)
-            | "Parse CSV Lines"
-            >> beam.Map(lambda x: dict(zip(FILE_COLUMNS.keys(), x.split(","))))
+            | "Read Pub/Sub" >> beam.io.gcp.pubsub.ReadStringsFromPubSub(subscription=subscription_id)
+            | "Convert Message to Row" >> beam.ParDo(ConvertStringToDict())
         )
+
+        raw_data | "print row" >> beam.Map(print)
+        
+        # skipping RDM transform and 
         parsed_data = (
             raw_data
             | "Parse Row" >> beam.ParDo(ParseRow())

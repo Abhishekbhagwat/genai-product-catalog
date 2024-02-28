@@ -31,9 +31,9 @@ of the model it was easier to simply reproduce it in simple classes.
 """
 
 SPEC_MATCH_ONE = re.compile("(.*?)\\[(.*)\\](.*)")
-SPEC_MATCH_TWO = re.compile('(.*?)=>"(.*?)"(.*?)=>"(.*?)"(.*)')
-SPACE_CLEANER = re.compile("\s+")
-ID_CLEANER = re.compile("[^a-zA-Z ]")
+SPEC_MATCH_TWO = re.compile("(.*?)=>\"(.*?)\"(.*?)=>\"(.*?)\"(.*)")
+SPACE_CLEANER = re.compile('\s+')
+ID_CLEANER = re.compile('[^a-zA-Z ]')
 
 MODEL = spacy.load("en_core_web_sm")
 
@@ -196,7 +196,7 @@ def parse_category(
     value: str, brand_info: List[str]
 ) -> Union[Category, None]:  # Category | None:
     if isinstance(value, str):
-        clean_value = value.replace('["', "").replace('"]', "")
+        clean_value = value.replace("[\"", "").replace("\"]", "")
         clean_values = [x.strip() for x in clean_value.split(" >> ")]
         parent = Category("")
         current = parent
@@ -281,7 +281,7 @@ def parse_row(r: pd.DataFrame, pre_process: bool = False) -> Product:
     base_url = r["product_url"]
 
     if isinstance(images_raw, str):
-        images_raw = images_raw.replace("[", "").replace("]", "").replace('"', "")
+        images_raw = images_raw.replace("[", "").replace("]", "").replace("\"", '')
         images: List[Image] = [Image(x) for x in images_raw.split(",")]
 
     # No images, ignore product
